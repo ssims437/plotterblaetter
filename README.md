@@ -2,14 +2,15 @@
 
 Vier interaktive Blätter über Struktur, die aus lokalen Regeln fällt. Je eine
 self-contained HTML-Datei: kein Build, kein Paketmanager, keine externe Zeile Code.
-Herunterladen, im Browser öffnen, fertig.
 
-| Blatt | Datei | Worum es geht |
-|---|---|---|
-| **01 — Kollaps** | [`index.html`](index.html) | Wave Function Collapse. Kachelsätze und ein aus einem gemalten Bitmap gelerntes Overlapping-Modell, mit chronologischem Backtracking. |
-| **02 — Interferenz** | [`interferenz.html`](interferenz.html) | Die Wellengleichung als Finite-Differenzen-Gitter, gezeichnet als Höhenlinien. Doppelspalt, Gitter, Hohlspiegel; Wände malbar. |
-| **03 — Spur** | [`spur.html`](spur.html) | Physarum: bis zu einer Million Agenten auf der GPU, drei Regeln, daraus Adernetze. |
-| **04 — Zoo** | [`zoo.html`](zoo.html) | Lenia, plus ein Gerät, das den Regelraum kartiert und darin nach Strukturen sucht, die zusammenhalten. |
+### → [Direkt öffnen](https://ssims437.github.io/plotterblaetter/)
+
+| Blatt | Öffnen | Quelle | Worum es geht |
+|---|---|---|---|
+| **01 — Kollaps** | [▶](https://ssims437.github.io/plotterblaetter/) | [`index.html`](index.html) | Wave Function Collapse. Kachelsätze und ein aus einem gemalten Bitmap gelerntes Overlapping-Modell, mit chronologischem Backtracking. |
+| **02 — Interferenz** | [▶](https://ssims437.github.io/plotterblaetter/interferenz.html) | [`interferenz.html`](interferenz.html) | Die Wellengleichung als Finite-Differenzen-Gitter, gezeichnet als Höhenlinien. Doppelspalt, Gitter, Hohlspiegel; Wände malbar. |
+| **03 — Spur** | [▶](https://ssims437.github.io/plotterblaetter/spur.html) | [`spur.html`](spur.html) | Physarum: bis zu einer Million Agenten auf der GPU, drei Regeln, daraus Adernetze. |
+| **04 — Zoo** | [▶](https://ssims437.github.io/plotterblaetter/zoo.html) | [`zoo.html`](zoo.html) | Lenia, plus ein Gerät, das den Regelraum kartiert und darin nach Strukturen sucht, die zusammenhalten. |
 
 <p align="center">
   <img src="bilder/blatt-01-kollaps.png" width="49%" alt="Blatt 01: Schaltkreis-Kacheln, vollständig kollabiert">
@@ -99,8 +100,9 @@ gestreiften Scheibe zusammen.
 
 ## Benutzen
 
-Datei öffnen, mehr braucht es nicht. Über `file://` funktioniert alles; wer lieber einen
-Server mag:
+Am einfachsten über die [Live-Fassung](https://ssims437.github.io/plotterblaetter/).
+Lokal genügt es, die Datei zu öffnen — über `file://` funktioniert alles; wer lieber
+einen Server mag:
 
 ```bash
 python -m http.server 8000
