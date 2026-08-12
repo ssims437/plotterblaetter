@@ -130,3 +130,6 @@ daneben als `kollaps.html`, `interferenz.html`, `spur.html` und `zoo.html`.
 ## Lizenz
 
 [MIT](LICENSE) — nimm es, zerleg es, bau was Besseres.
+
+Verwandt: [Redundanz](https://github.com/ssims437/redundanz) — LZ77 und Huffman von Grund
+auf, mit einer Karte, die zeigt, was jedes Zeichen eines Textes an Bits kostet.
