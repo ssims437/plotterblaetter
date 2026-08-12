@@ -1,0 +1,8 @@
+# Belegscreenshots aus der Entwicklung — nur die Auswahl in bilder/ kommt ins Repo
+/wfc-*.png
+/int-*.png
+/spur-*.png
+/zoo-*.png
+
+.DS_Store
+Thumbs.db

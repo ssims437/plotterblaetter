@@ -1,0 +1,851 @@
+<meta charset="utf-8" />
+<title>Interferenz — Wellenfeld-Plotter</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+  :root {
+    --paper:      #E6E3EC;
+    --panel:      #F2F0F6;
+    --panel-sunk: #DCD8E6;
+    --rule:       #C5C0D4;
+    --ink:        #1E1B33;
+    --muted:      #6B6682;
+    --pen-a:      #4338A8;
+    --pen-b:      #C25A3C;
+    --focus:      #4338A8;
+
+    --c-ground:   #EFEDF3;
+    --c-line:     #1E1B33;
+    --c-pen-a:    #4338A8;
+    --c-pen-b:    #C25A3C;
+    --c-wall:     #2A2545;
+
+    --shadow: 0 1px 0 rgba(30,27,51,.06), 0 12px 28px -18px rgba(30,27,51,.55);
+
+    --f-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    --f-body: -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --f-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "DejaVu Sans Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #15131F;
+      --panel:      #1D1A2B;
+      --panel-sunk: #100E19;
+      --rule:       #2E2A40;
+      --ink:        #DEDAEA;
+      --muted:      #8B84A3;
+      --pen-a:      #9186EE;
+      --pen-b:      #E58B6B;
+      --focus:      #9186EE;
+
+      --c-ground:   #12101B;
+      --c-line:     #DEDAEA;
+      --c-pen-a:    #9186EE;
+      --c-pen-b:    #E58B6B;
+      --c-wall:     #524A78;
+
+      --shadow: 0 1px 0 rgba(255,255,255,.03), 0 14px 34px -20px #000;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #15131F;
+    --panel:      #1D1A2B;
+    --panel-sunk: #100E19;
+    --rule:       #2E2A40;
+    --ink:        #DEDAEA;
+    --muted:      #8B84A3;
+    --pen-a:      #9186EE;
+    --pen-b:      #E58B6B;
+    --focus:      #9186EE;
+
+    --c-ground:   #12101B;
+    --c-line:     #DEDAEA;
+    --c-pen-a:    #9186EE;
+    --c-pen-b:    #E58B6B;
+    --c-wall:     #524A78;
+
+    --shadow: 0 1px 0 rgba(255,255,255,.03), 0 14px 34px -20px #000;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: clamp(20px, 4vw, 44px) clamp(16px, 4vw, 32px) 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 28px;
+  }
+
+  .masthead { display: flex; flex-direction: column; gap: 10px; }
+
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: .18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex; gap: 10px; align-items: center;
+    margin: 0;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+  h1 {
+    font-family: var(--f-display);
+    font-weight: 400;
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.02;
+    letter-spacing: -.015em;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--pen-a); }
+
+  .standfirst { max-width: 62ch; color: var(--muted); font-size: 16px; margin: 0; }
+
+  .bench {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 264px;
+    gap: 24px;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+  .plate {
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    box-shadow: var(--shadow);
+    padding: 12px;
+    display: flex; flex-direction: column; gap: 10px;
+    min-width: 0;
+  }
+
+  .plate-canvas {
+    background: var(--c-ground);
+    border: 1px solid var(--rule);
+    display: flex; justify-content: center;
+    overflow-x: auto;
+  }
+  canvas#field { display: block; max-width: 100%; height: auto; cursor: crosshair; touch-action: none; }
+
+  .scope {
+    background: var(--c-ground);
+    border: 1px solid var(--rule);
+    position: relative;
+    overflow: hidden;
+  }
+  canvas#probe { display: block; width: 100%; height: 70px; }
+  .scope figcaption {
+    position: absolute; top: 6px; left: 8px;
+    font-family: var(--f-mono);
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted);
+    pointer-events: none;
+  }
+
+  .readout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(92px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+  }
+  .stat { background: var(--panel); padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .stat dt {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted); margin: 0;
+  }
+  .stat dd { margin: 0; font-family: var(--f-mono); font-size: 16px; font-variant-numeric: tabular-nums; }
+
+  .rail {
+    display: flex; flex-direction: column; gap: 18px;
+    background: var(--panel);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    box-shadow: var(--shadow);
+    padding: 16px;
+  }
+  .group { display: flex; flex-direction: column; gap: 9px; }
+  .group > h2 {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 0; padding-bottom: 7px; border-bottom: 1px solid var(--rule); font-weight: 500;
+  }
+
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  button, select, input[type="text"] {
+    font-family: var(--f-mono); font-size: 12px;
+    color: var(--ink); background: var(--paper);
+    border: 1px solid var(--rule); border-radius: 2px;
+    padding: 7px 10px; cursor: pointer; letter-spacing: .04em;
+  }
+  button:hover, select:hover { border-color: var(--pen-a); }
+  button:active { background: var(--panel-sunk); }
+  button.primary {
+    background: var(--pen-a); border-color: var(--pen-a); color: var(--panel);
+    flex: 1 1 96px;
+  }
+  button.primary:hover { filter: brightness(1.08); }
+  button[aria-pressed="true"] {
+    background: var(--pen-a); border-color: var(--pen-a); color: var(--panel);
+  }
+  select { width: 100%; cursor: default; }
+
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  label.field {
+    display: flex; flex-direction: column; gap: 5px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  label.field span { color: var(--ink); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--pen-a); cursor: pointer; }
+
+  .toolbar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding-bottom: 10px; border-bottom: 1px solid var(--rule);
+  }
+  .toolbar-label {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .toolbar-brush {
+    display: flex; align-items: center; gap: 8px; margin-left: auto;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .toolbar-brush span { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .toolbar-brush input[type="range"] { width: 110px; }
+
+  .notes {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 28px; border-top: 1px solid var(--rule); padding-top: 24px;
+  }
+  .notes section { display: flex; flex-direction: column; gap: 7px; }
+  .notes h3 { font-family: var(--f-display); font-weight: 400; font-size: 20px; margin: 0; }
+  .notes p { margin: 0; max-width: 62ch; color: var(--muted); font-size: 14px; }
+  .notes b { color: var(--ink); font-weight: 600; }
+  code {
+    font-family: var(--f-mono); font-size: .88em;
+    background: var(--panel-sunk); padding: 1px 4px; border-radius: 2px; color: var(--ink);
+  }
+
+  .colophon {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    border-top: 1px solid var(--rule); padding-top: 16px;
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Blatt 02 · Wellenfeld-Plotter</p>
+    <h1>Interferenz: zwei Wege, ein <em>Ort</em></h1>
+    <p class="standfirst">
+      Eine Welle läuft gegen eine Wand mit zwei Spalten. Dahinter überlagern sich beide
+      Durchlässe — und weil Wellen sich addieren statt zu verdrängen, entstehen Orte, an denen
+      dauerhaft nichts ankommt. Hier gerechnet als Finite-Differenzen-Gitter und gezeichnet als
+      Höhenlinien: jede Linie ist eine feste Auslenkung, blau nach oben, rot nach unten.
+    </p>
+  </header>
+
+  <div class="bench">
+
+    <div class="plate">
+      <div class="toolbar">
+        <span class="toolbar-label">Werkzeug</span>
+        <div class="tools">
+          <button id="t-wall" aria-pressed="true">Wand</button>
+          <button id="t-erase" aria-pressed="false">Radierer</button>
+          <button id="t-probe" aria-pressed="false">Sonde</button>
+          <button id="t-src" aria-pressed="false">Quellpunkt</button>
+        </div>
+        <label class="toolbar-brush">
+          Pinsel <span id="l-brush">4</span>
+          <input type="range" id="i-brush" min="1" max="14" value="4" />
+        </label>
+      </div>
+      <div class="plate-canvas">
+        <canvas id="field" width="720" height="480" aria-label="Wellenfeld"></canvas>
+      </div>
+      <figure class="scope" style="margin:0">
+        <canvas id="probe" width="720" height="70" aria-label="Zeitverlauf an der Sonde"></canvas>
+        <figcaption id="scope-cap">Sonde — mit dem Werkzeug „Sonde“ ins Feld klicken</figcaption>
+      </figure>
+      <dl class="readout">
+        <div class="stat"><dt>Schritte</dt><dd id="r-t">0</dd></div>
+        <div class="stat"><dt>Wellenlänge</dt><dd id="r-lambda">—</dd></div>
+        <div class="stat"><dt>Sonde</dt><dd id="r-probe">—</dd></div>
+        <div class="stat"><dt>Spitze</dt><dd id="r-peak">0.00</dd></div>
+        <div class="stat"><dt>Courant</dt><dd id="r-cfl">0.59</dd></div>
+      </dl>
+    </div>
+
+    <aside class="rail">
+
+      <div class="group">
+        <h2>Lauf</h2>
+        <div class="btn-row">
+          <button id="b-play" class="primary">Pause</button>
+          <button id="b-reset">Feld leeren</button>
+        </div>
+        <div class="btn-row">
+          <button id="b-pulse" style="flex:1">Einzelpuls</button>
+          <button id="b-settle" style="flex:1">Einschwingen</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Quelle</h2>
+        <label class="field">
+          Art
+          <select id="i-src">
+            <option value="plane" selected>Ebene Welle links</option>
+            <option value="point">Punktquelle</option>
+            <option value="off">Aus</option>
+          </select>
+        </label>
+        <label class="field">
+          Frequenz <span id="l-freq">0.045</span>
+          <input type="range" id="i-freq" min="10" max="120" value="45" />
+        </label>
+        <label class="field">
+          Dämpfung <span id="l-damp">0.0004</span>
+          <input type="range" id="i-damp" min="0" max="40" value="4" />
+        </label>
+      </div>
+
+      <div class="group">
+        <h2>Hindernis</h2>
+        <label class="field">
+          Vorlage
+          <select id="i-preset">
+            <option value="double" selected>Doppelspalt</option>
+            <option value="single">Einzelspalt</option>
+            <option value="grating">Gitter, fünf Spalte</option>
+            <option value="mirror">Hohlspiegel</option>
+            <option value="free">Freies Feld</option>
+          </select>
+        </label>
+        <label class="field">
+          Spaltbreite <span id="l-slit">7</span>
+          <input type="range" id="i-slit" min="2" max="26" value="7" />
+        </label>
+        <label class="field">
+          Spaltabstand <span id="l-gap">34</span>
+          <input type="range" id="i-gap" min="10" max="90" value="34" />
+        </label>
+      </div>
+
+      <div class="group">
+        <h2>Darstellung</h2>
+        <label class="field">
+          Linienabstand <span id="l-contrast">1.00</span>
+          <input type="range" id="i-contrast" min="20" max="300" value="100" />
+        </label>
+        <div class="btn-row">
+          <button id="b-png" style="flex:1">PNG speichern</button>
+        </div>
+      </div>
+
+    </aside>
+  </div>
+
+  <div class="notes">
+    <section>
+      <h3>Was gerechnet wird</h3>
+      <p>
+        Die diskrete Wellengleichung, ein Gitterpunkt sieht nur seine vier Nachbarn:
+        <code>u′ = 2u − u₋ + C²·(Σ Nachbarn − 4u)</code>. Kein Strahl, keine Optik-Formel —
+        die Streifen hinter dem Spalt entstehen von selbst.
+      </p>
+    </section>
+    <section>
+      <h3>Warum Höhenlinien</h3>
+      <p>
+        Ein Farbverlauf zeigt Amplitude, aber verschluckt Struktur. <b>Marching Squares</b> legt
+        stattdessen Linien konstanter Auslenkung durch das Feld — dieselbe Technik wie bei einer
+        Landkarte. Wo Linien dicht stehen, ist die Front steil; wo sie fehlen, liegt ein Knoten.
+      </p>
+    </section>
+    <section>
+      <h3>Der stille Ort</h3>
+      <p>
+        Zwischen den hellen Streifen liegen Bahnen, auf denen die beiden Spalte immer gegenphasig
+        ankommen. Dort bleibt es dauerhaft ruhig, obwohl beide Wege Energie liefern. Setz die
+        <b>Sonde</b> auf so eine Bahn — der Zeitverlauf unten bleibt flach.
+      </p>
+    </section>
+    <section>
+      <h3>Selber eingreifen</h3>
+      <p>
+        Wände lassen sich mit der Maus malen und wieder radieren. Ränder schlucken die Welle
+        über eine Dämpfungszone, damit nichts zurückreflektiert. <code>Leertaste</code> Start/Stopp,
+        <code>P</code> Einzelpuls, <code>R</code> Feld leeren.
+      </p>
+    </section>
+  </div>
+
+  <p class="colophon">Blatt 02 · Finite Differenzen auf 240 × 160 Zellen · Höhenlinien via Marching Squares</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* =========================== grid =========================== */
+  const W = 240, H = 160, PX = 3;
+  const N = W * H;
+
+  const u = new Float32Array(N);
+  const uPrev = new Float32Array(N);
+  const uNext = new Float32Array(N);
+  const wall = new Uint8Array(N);
+  const absorb = new Float32Array(N);
+
+  const C2 = 0.35;                    // (c·dt/dx)² — stable below 0.5 in 2D
+  const COURANT = Math.sqrt(C2);
+
+  let t = 0, freq = 0.045, damping = 0.0004, amp = 1.0;
+  let srcMode = "plane", srcX = 24, srcY = H >> 1;
+  let running = true, peak = 0, peakRef = 0.05;
+
+  /* absorbing frame: quadratic ramp over the outer cells */
+  (function buildAbsorb() {
+    const B = 16;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const d = Math.min(x, y, W - 1 - x, H - 1 - y);
+        absorb[y * W + x] = d >= B ? 1 : 1 - 0.06 * Math.pow((B - d) / B, 2);
+      }
+    }
+  })();
+
+  /* ========================= obstacles ========================= */
+  let slit = 7, gapDist = 34;
+
+  function clearWalls() { wall.fill(0); }
+
+  function buildPreset(kind) {
+    clearWalls();
+    const wx = Math.round(W * 0.42), th = 3;
+    const col = (x, y0, y1) => {
+      for (let y = Math.max(0, y0); y < Math.min(H, y1); y++)
+        for (let k = 0; k < th; k++) wall[y * W + x + k] = 1;
+    };
+    const mid = H >> 1;
+
+    if (kind === "free") return;
+
+    if (kind === "double") {
+      const a = mid - (gapDist >> 1), b = mid + (gapDist >> 1);
+      col(wx, 0, a - (slit >> 1));
+      col(wx, a + Math.ceil(slit / 2), b - (slit >> 1));
+      col(wx, b + Math.ceil(slit / 2), H);
+    } else if (kind === "single") {
+      col(wx, 0, mid - (slit >> 1));
+      col(wx, mid + Math.ceil(slit / 2), H);
+    } else if (kind === "grating") {
+      const period = Math.max(slit + 4, gapDist >> 1);
+      let prevEnd = 0;
+      for (let k = -2; k <= 2; k++) {
+        const c = mid + k * period;
+        col(wx, prevEnd, c - (slit >> 1));
+        prevEnd = c + Math.ceil(slit / 2);
+      }
+      col(wx, prevEnd, H);
+    } else if (kind === "mirror") {
+      const focus = 46;
+      for (let y = 8; y < H - 8; y++) {
+        const dy = y - mid;
+        const x = Math.round(W * 0.80 - (dy * dy) / (4 * focus));
+        for (let k = 0; k < 4; k++) {
+          const xx = x + k;
+          if (xx > 2 && xx < W - 2) wall[y * W + xx] = 1;
+        }
+      }
+    }
+  }
+
+  /* ========================== stepping ========================= */
+  function step() {
+    for (let y = 1; y < H - 1; y++) {
+      const row = y * W;
+      for (let x = 1; x < W - 1; x++) {
+        const i = row + x;
+        if (wall[i]) { uNext[i] = 0; continue; }
+        const lap = u[i - 1] + u[i + 1] + u[i - W] + u[i + W] - 4 * u[i];
+        uNext[i] = (2 * u[i] - uPrev[i] + C2 * lap) * (1 - damping);
+      }
+    }
+
+    // Drive the source additively, not by assignment: a hard-set cell reflects everything
+    // that comes back at it, turning source and wall into a resonating cavity.
+    const ramp = Math.min(1, t / 50);
+    const s = amp * ramp * Math.sin(2 * Math.PI * freq * t);
+    if (srcMode === "plane") {
+      for (let y = 20; y < H - 20; y++) if (!wall[y * W + 22]) uNext[y * W + 22] += s * 0.08;
+    } else if (srcMode === "point") {
+      const i = srcY * W + srcX;
+      if (!wall[i]) uNext[i] += s * 0.5;
+    }
+
+    // rotate + absorbing frame, and track the peak
+    let pk = 0;
+    for (let i = 0; i < N; i++) {
+      const a = absorb[i];
+      uPrev[i] = u[i] * a;
+      const v = uNext[i] * a;
+      u[i] = v;
+      const av = v < 0 ? -v : v;
+      if (av > pk) pk = av;
+    }
+    peak = pk;
+    // slowly-decaying reference so the contour levels stay legible at any amplitude
+    peakRef = Math.max(pk, peakRef * 0.997);
+    t++;
+
+    if (probeI >= 0) {
+      hist[histHead] = u[probeI];
+      histHead = (histHead + 1) % hist.length;
+    }
+  }
+
+  function pulse() {
+    const cx = srcMode === "plane" ? 30 : srcX, cy = srcMode === "plane" ? (H >> 1) : srcY;
+    for (let y = -12; y <= 12; y++) {
+      for (let x = -12; x <= 12; x++) {
+        const px = cx + x, py = cy + y;
+        if (px < 1 || py < 1 || px >= W - 1 || py >= H - 1) continue;
+        const i = py * W + px;
+        if (wall[i]) continue;
+        const g = Math.exp(-(x * x + y * y) / 18);
+        u[i] += g; uPrev[i] += g;
+      }
+    }
+  }
+
+  function clearField() {
+    u.fill(0); uPrev.fill(0); uNext.fill(0);
+    t = 0; peak = 0; peakRef = 0.05; hist.fill(0);
+  }
+
+  /* ======================= marching squares ==================== */
+  // one flat buffer of segments per contour level: x0,y0,x1,y1 …
+  const SEGCAP = 60000;
+  const segBuf = new Float32Array(SEGCAP * 4);
+
+  function contour(level) {
+    let n = 0;
+    for (let y = 0; y < H - 1; y++) {
+      const r0 = y * W, r1 = r0 + W;
+      for (let x = 0; x < W - 1; x++) {
+        const a = u[r0 + x], b = u[r0 + x + 1], c = u[r1 + x + 1], d = u[r1 + x];
+        let idx = 0;
+        if (a > level) idx |= 8;
+        if (b > level) idx |= 4;
+        if (c > level) idx |= 2;
+        if (d > level) idx |= 1;
+        if (idx === 0 || idx === 15) continue;
+
+        // crossing points on the four edges, linearly interpolated
+        const tx = x + (level - a) / (b - a);          // top    (a→b)
+        const ry = y + (level - b) / (c - b);          // right  (b→c)
+        const bx = x + (level - d) / (c - d);          // bottom (d→c)
+        const ly = y + (level - a) / (d - a);          // left   (a→d)
+        const o = n * 4;
+        if (n + 2 >= SEGCAP) return n;
+
+        switch (idx) {
+          case 1: case 14:
+            segBuf[o] = x; segBuf[o+1] = ly; segBuf[o+2] = bx; segBuf[o+3] = y + 1; n++; break;
+          case 2: case 13:
+            segBuf[o] = bx; segBuf[o+1] = y + 1; segBuf[o+2] = x + 1; segBuf[o+3] = ry; n++; break;
+          case 3: case 12:
+            segBuf[o] = x; segBuf[o+1] = ly; segBuf[o+2] = x + 1; segBuf[o+3] = ry; n++; break;
+          case 4: case 11:
+            segBuf[o] = tx; segBuf[o+1] = y; segBuf[o+2] = x + 1; segBuf[o+3] = ry; n++; break;
+          case 6: case 9:
+            segBuf[o] = tx; segBuf[o+1] = y; segBuf[o+2] = bx; segBuf[o+3] = y + 1; n++; break;
+          case 7: case 8:
+            segBuf[o] = x; segBuf[o+1] = ly; segBuf[o+2] = tx; segBuf[o+3] = y; n++; break;
+          case 5:  // saddle — draw both branches
+            segBuf[o] = x; segBuf[o+1] = ly; segBuf[o+2] = tx; segBuf[o+3] = y; n++;
+            segBuf[o+4] = bx; segBuf[o+5] = y + 1; segBuf[o+6] = x + 1; segBuf[o+7] = ry; n++;
+            break;
+          case 10:
+            segBuf[o] = tx; segBuf[o+1] = y; segBuf[o+2] = x + 1; segBuf[o+3] = ry; n++;
+            segBuf[o+4] = x; segBuf[o+5] = ly; segBuf[o+6] = bx; segBuf[o+7] = y + 1; n++;
+            break;
+        }
+      }
+    }
+    return n;
+  }
+
+  /* =========================== render ========================== */
+  const cv = document.getElementById("field");
+  const ctx = cv.getContext("2d");
+  const sc = document.getElementById("probe");
+  const sctx = sc.getContext("2d");
+
+  const P = {};
+  function readPalette() {
+    const cs = getComputedStyle(document.documentElement);
+    for (const k of ["ground", "line", "pen-a", "pen-b", "wall"]) P[k] = cs.getPropertyValue("--c-" + k).trim();
+    P.rule = cs.getPropertyValue("--rule").trim();
+    P.muted = cs.getPropertyValue("--muted").trim();
+  }
+
+  // levels as fractions of the running peak, not absolute values
+  const BASE = [0.10, 0.28, 0.52, 0.80];
+  let contrast = 1;
+
+  function drawLevel(level, colour, width) {
+    const n = contour(level);
+    if (!n) return;
+    ctx.strokeStyle = colour;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    for (let k = 0; k < n; k++) {
+      const o = k * 4;
+      ctx.moveTo(segBuf[o] * PX, segBuf[o + 1] * PX);
+      ctx.lineTo(segBuf[o + 2] * PX, segBuf[o + 3] * PX);
+    }
+    ctx.stroke();
+  }
+
+  function render() {
+    ctx.fillStyle = P.ground;
+    ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.lineCap = "round";
+
+    const ref = Math.max(0.02, peakRef);
+    for (let k = 0; k < BASE.length; k++) {
+      const lv = BASE[k] * ref / contrast;
+      const w = 0.8 + k * 0.55;
+      ctx.globalAlpha = 0.45 + k * 0.16;
+      drawLevel(lv, P["pen-a"], w);
+      drawLevel(-lv, P["pen-b"], w);
+    }
+    ctx.globalAlpha = 1;
+
+    // walls sit on top so contours never bleed through them
+    ctx.fillStyle = P.wall;
+    for (let y = 0; y < H; y++) {
+      let x = 0;
+      while (x < W) {
+        if (!wall[y * W + x]) { x++; continue; }
+        let x1 = x;
+        while (x1 < W && wall[y * W + x1]) x1++;
+        ctx.fillRect(x * PX, y * PX, (x1 - x) * PX, PX);
+        x = x1;
+      }
+    }
+
+    if (probeI >= 0) {
+      const px = (probeI % W) * PX, py = ((probeI / W) | 0) * PX;
+      ctx.strokeStyle = P["pen-b"];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(px, py, 6, 0, 7); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(px - 10, py); ctx.lineTo(px - 3, py);
+      ctx.moveTo(px + 3, py); ctx.lineTo(px + 10, py); ctx.stroke();
+    }
+    if (srcMode === "point") {
+      ctx.strokeStyle = P["pen-a"];
+      ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(srcX * PX, srcY * PX, 4, 0, 7); ctx.stroke();
+    }
+  }
+
+  /* ========================== the probe ======================== */
+  let probeI = -1;
+  const hist = new Float32Array(720);
+  let histHead = 0;
+
+  function drawProbe() {
+    const w = sc.width, h = sc.height, mid = h / 2;
+    sctx.fillStyle = P.ground;
+    sctx.fillRect(0, 0, w, h);
+    sctx.strokeStyle = P.rule;
+    sctx.lineWidth = 1;
+    sctx.beginPath(); sctx.moveTo(0, mid + .5); sctx.lineTo(w, mid + .5); sctx.stroke();
+    if (probeI < 0) return;
+
+    const scale = mid * 0.9 / Math.max(0.02, peakRef) * contrast;
+    sctx.lineWidth = 1.4;
+    sctx.beginPath();
+    for (let k = 0; k < hist.length; k++) {
+      const v = hist[(histHead + k) % hist.length];
+      const x = k * (w / hist.length);
+      const y = Math.max(1, Math.min(h - 1, mid - v * scale));
+      if (k === 0) sctx.moveTo(x, y); else sctx.lineTo(x, y);
+    }
+    sctx.strokeStyle = P["pen-a"];
+    sctx.stroke();
+  }
+
+  /* ========================== readouts ========================= */
+  const $ = (id) => document.getElementById(id);
+
+  function readout() {
+    $("r-t").textContent = String(t);
+    $("r-lambda").textContent = (COURANT / freq).toFixed(1) + " Z";
+    $("r-peak").textContent = peak.toFixed(3);
+    $("r-cfl").textContent = COURANT.toFixed(2);
+    if (probeI < 0) { $("r-probe").textContent = "—"; return; }
+    let mn = Infinity, mx = -Infinity;
+    for (let k = 0; k < hist.length; k++) { const v = hist[k]; if (v < mn) mn = v; if (v > mx) mx = v; }
+    $("r-probe").textContent = (mx - mn).toFixed(3);
+  }
+
+  /* =========================== input =========================== */
+  let tool = "wall", brush = 4, painting = false;
+
+  function setTool(name) {
+    tool = name;
+    for (const [id, n] of [["t-wall","wall"],["t-erase","erase"],["t-probe","probe"],["t-src","src"]])
+      $(id).setAttribute("aria-pressed", String(n === name));
+  }
+
+  function cellAt(e) {
+    const r = cv.getBoundingClientRect();
+    const x = Math.floor((e.clientX - r.left) / r.width * W);
+    const y = Math.floor((e.clientY - r.top) / r.height * H);
+    return (x < 0 || y < 0 || x >= W || y >= H) ? null : { x, y };
+  }
+
+  function apply(e) {
+    const c = cellAt(e);
+    if (!c) return;
+    if (tool === "probe") {
+      probeI = c.y * W + c.x;
+      hist.fill(0);
+      $("scope-cap").textContent = "Sonde bei " + c.x + " / " + c.y;
+      return;
+    }
+    if (tool === "src") { srcX = c.x; srcY = c.y; return; }
+    const v = tool === "wall" ? 1 : 0;
+    const r = brush;
+    for (let dy = -r; dy <= r; dy++) {
+      for (let dx = -r; dx <= r; dx++) {
+        if (dx * dx + dy * dy > r * r) continue;
+        const x = c.x + dx, y = c.y + dy;
+        if (x < 1 || y < 1 || x >= W - 1 || y >= H - 1) continue;
+        const i = y * W + x;
+        wall[i] = v;
+        if (v) { u[i] = 0; uPrev[i] = 0; uNext[i] = 0; }
+      }
+    }
+  }
+
+  cv.addEventListener("pointerdown", (e) => {
+    painting = true; cv.setPointerCapture(e.pointerId); apply(e);
+  });
+  cv.addEventListener("pointermove", (e) => { if (painting) apply(e); });
+  cv.addEventListener("pointerup", () => { painting = false; });
+  cv.addEventListener("pointercancel", () => { painting = false; });
+
+  $("t-wall").addEventListener("click", () => setTool("wall"));
+  $("t-erase").addEventListener("click", () => setTool("erase"));
+  $("t-probe").addEventListener("click", () => setTool("probe"));
+  $("t-src").addEventListener("click", () => setTool("src"));
+
+  $("b-play").addEventListener("click", () => {
+    running = !running;
+    $("b-play").textContent = running ? "Pause" : "Start";
+  });
+  $("b-reset").addEventListener("click", clearField);
+  $("b-pulse").addEventListener("click", pulse);
+  $("b-settle").addEventListener("click", () => {
+    for (let k = 0; k < 600; k++) step();   // skip the transient, land on the standing pattern
+    render(); drawProbe(); readout();
+  });
+
+  $("i-freq").addEventListener("input", (e) => {
+    freq = +e.target.value / 1000;
+    $("l-freq").textContent = freq.toFixed(3);
+  });
+  $("i-damp").addEventListener("input", (e) => {
+    damping = +e.target.value / 10000;
+    $("l-damp").textContent = damping.toFixed(4);
+  });
+  $("i-contrast").addEventListener("input", (e) => {
+    contrast = +e.target.value / 100;
+    $("l-contrast").textContent = contrast.toFixed(2);
+  });
+  $("i-brush").addEventListener("input", (e) => {
+    brush = +e.target.value; $("l-brush").textContent = String(brush);
+  });
+  $("i-src").addEventListener("change", (e) => { srcMode = e.target.value; });
+
+  function rebuildPreset() {
+    buildPreset($("i-preset").value);
+    clearField();
+  }
+  $("i-preset").addEventListener("change", rebuildPreset);
+  $("i-slit").addEventListener("input", (e) => {
+    slit = +e.target.value; $("l-slit").textContent = String(slit); rebuildPreset();
+  });
+  $("i-gap").addEventListener("input", (e) => {
+    gapDist = +e.target.value; $("l-gap").textContent = String(gapDist); rebuildPreset();
+  });
+
+  $("b-png").addEventListener("click", () => {
+    const a = document.createElement("a");
+    a.download = "interferenz-" + $("i-preset").value + "-" + t + ".png";
+    a.href = cv.toDataURL("image/png");
+    a.click();
+  });
+
+  addEventListener("keydown", (e) => {
+    if (e.target.matches("input, select, textarea")) return;
+    if (e.code === "Space") { e.preventDefault(); $("b-play").click(); }
+    else if (e.key === "p" || e.key === "P") pulse();
+    else if (e.key === "r" || e.key === "R") clearField();
+  });
+
+  /* ========================= theme + loop ====================== */
+  function refreshTheme() { readPalette(); render(); drawProbe(); }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refreshTheme);
+  new MutationObserver(refreshTheme).observe(document.documentElement, {
+    attributes: true, attributeFilter: ["data-theme"]
+  });
+
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  let frames = 0;
+  function loop() {
+    if (running) { step(); step(); }
+    render();
+    if ((frames++ & 1) === 0) { drawProbe(); readout(); }
+    requestAnimationFrame(loop);
+  }
+
+  readPalette();
+  buildPreset("double");
+  probeI = (H >> 1) * W + Math.round(W * 0.78);
+  $("scope-cap").textContent = "Sonde bei " + Math.round(W * 0.78) + " / " + (H >> 1);
+  setTool("wall");
+  if (reduceMotion) { running = false; $("b-play").textContent = "Start"; }
+  render(); drawProbe(); readout();
+  requestAnimationFrame(loop);
+})();
+</script>

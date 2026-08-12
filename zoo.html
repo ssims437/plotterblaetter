@@ -1,0 +1,1526 @@
+<meta charset="utf-8" />
+<title>Zoo — Lenia-Fallensteller</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<style>
+  :root {
+    --paper:      #E6E3EC;
+    --panel:      #F2F0F6;
+    --panel-sunk: #DCD8E6;
+    --rule:       #C5C0D4;
+    --ink:        #1E1B33;
+    --muted:      #6B6682;
+    --pen-a:      #4338A8;
+    --pen-b:      #C25A3C;
+    --focus:      #4338A8;
+
+    --c-ground:   #EFEDF3;
+    --c-pen-a:    #4338A8;
+    --c-pen-b:    #C25A3C;
+    --c-line:     #1E1B33;
+
+    --shadow: 0 1px 0 rgba(30,27,51,.06), 0 12px 28px -18px rgba(30,27,51,.55);
+
+    --f-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, Georgia, serif;
+    --f-body: -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --f-mono: ui-monospace, "Cascadia Mono", "SF Mono", Consolas, "DejaVu Sans Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #15131F;
+      --panel:      #1D1A2B;
+      --panel-sunk: #100E19;
+      --rule:       #2E2A40;
+      --ink:        #DEDAEA;
+      --muted:      #8B84A3;
+      --pen-a:      #9186EE;
+      --pen-b:      #E58B6B;
+      --focus:      #9186EE;
+
+      --c-ground:   #12101B;
+      --c-pen-a:    #9186EE;
+      --c-pen-b:    #E58B6B;
+      --c-line:     #DEDAEA;
+
+      --shadow: 0 1px 0 rgba(255,255,255,.03), 0 14px 34px -20px #000;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #15131F;
+    --panel:      #1D1A2B;
+    --panel-sunk: #100E19;
+    --rule:       #2E2A40;
+    --ink:        #DEDAEA;
+    --muted:      #8B84A3;
+    --pen-a:      #9186EE;
+    --pen-b:      #E58B6B;
+    --focus:      #9186EE;
+
+    --c-ground:   #12101B;
+    --c-pen-a:    #9186EE;
+    --c-pen-b:    #E58B6B;
+    --c-line:     #DEDAEA;
+
+    --shadow: 0 1px 0 rgba(255,255,255,.03), 0 14px 34px -20px #000;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0; background: var(--paper); color: var(--ink);
+    font-family: var(--f-body); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1180px; margin: 0 auto;
+    padding: clamp(20px, 4vw, 44px) clamp(16px, 4vw, 32px) 64px;
+    display: flex; flex-direction: column; gap: 28px;
+  }
+
+  .masthead { display: flex; flex-direction: column; gap: 10px; }
+  .eyebrow {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted);
+    display: flex; gap: 10px; align-items: center; margin: 0;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+  h1 {
+    font-family: var(--f-display); font-weight: 400;
+    font-size: clamp(34px, 6vw, 58px); line-height: 1.02;
+    letter-spacing: -.015em; margin: 0; text-wrap: balance;
+  }
+  h1 em { font-style: italic; color: var(--pen-a); }
+  .standfirst { max-width: 62ch; color: var(--muted); font-size: 16px; margin: 0; }
+
+  .bench { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 24px; align-items: start; }
+  @media (max-width: 940px) { .bench { grid-template-columns: minmax(0, 1fr); } }
+
+  .plate {
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+    box-shadow: var(--shadow); padding: 12px;
+    display: flex; flex-direction: column; gap: 10px; min-width: 0;
+  }
+  .toolbar, .footbar {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+  }
+  .toolbar { padding-bottom: 10px; border-bottom: 1px solid var(--rule); }
+  .footbar { padding-top: 10px; border-top: 1px solid var(--rule); }
+  .toolbar-label {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .tools { display: flex; gap: 6px; flex-wrap: wrap; }
+  .slider-inline {
+    display: flex; align-items: center; gap: 8px; margin-left: auto;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  .slider-inline span { color: var(--ink); font-variant-numeric: tabular-nums; }
+  .slider-inline input[type="range"] { width: 110px; }
+
+  .plate-canvas {
+    background: var(--c-ground); border: 1px solid var(--rule);
+    display: flex; justify-content: center; overflow-x: auto;
+  }
+  canvas#field { display: block; max-width: 100%; height: auto; cursor: crosshair; touch-action: none; }
+
+  .readout {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(86px, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule);
+  }
+  .stat { background: var(--panel); padding: 8px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .stat dt {
+    font-family: var(--f-mono); font-size: 9px; letter-spacing: .06em;
+    text-transform: uppercase; color: var(--muted); margin: 0;
+  }
+  .stat dd { margin: 0; font-family: var(--f-mono); font-size: 16px; font-variant-numeric: tabular-nums; }
+  .stat dd.warn { color: var(--pen-b); }
+  .stat dd.good { color: var(--pen-a); }
+
+  .rail {
+    display: flex; flex-direction: column; gap: 18px;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+    box-shadow: var(--shadow); padding: 16px;
+  }
+  .group { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; align-items: end; }
+  .group > h2 {
+    grid-column: 1 / -1;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted); margin: 0;
+    padding-bottom: 7px; border-bottom: 1px solid var(--rule); font-weight: 500;
+  }
+  .btn-row { grid-column: 1 / -1; display: flex; gap: 6px; flex-wrap: wrap; }
+  .group > label.wide, .group > .full { grid-column: 1 / -1; }
+
+  button, select {
+    font-family: var(--f-mono); font-size: 12px; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--rule); border-radius: 2px;
+    padding: 7px 10px; cursor: pointer; letter-spacing: .04em;
+  }
+  button:hover, select:hover { border-color: var(--pen-a); }
+  button:active { background: var(--panel-sunk); }
+  button:disabled { opacity: .5; cursor: default; }
+  button.primary { background: var(--pen-a); border-color: var(--pen-a); color: var(--panel); flex: 1 1 96px; }
+  button.primary:hover { filter: brightness(1.08); }
+  button[aria-pressed="true"] { background: var(--pen-a); border-color: var(--pen-a); color: var(--panel); }
+  select { width: 100%; cursor: default; }
+
+  :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+  label.field {
+    display: flex; flex-direction: column; gap: 5px;
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .13em;
+    text-transform: uppercase; color: var(--muted);
+  }
+  label.field span { color: var(--ink); font-variant-numeric: tabular-nums; }
+  input[type="range"] { width: 100%; accent-color: var(--pen-a); cursor: pointer; }
+
+  /* kernel profile preview */
+  canvas#kernel {
+    display: block; width: 100%; height: 56px;
+    border: 1px solid var(--rule); background: var(--c-ground);
+  }
+  canvas#regime {
+    display: block; width: 100%; height: auto;
+    border: 1px solid var(--rule); background: var(--c-ground); cursor: crosshair;
+  }
+
+  /* the cabinet of finds — the result, so it gets the full width */
+  .cabinet {
+    display: flex; flex-direction: column; gap: 12px;
+    background: var(--panel); border: 1px solid var(--rule); border-radius: 3px;
+    box-shadow: var(--shadow); padding: 16px;
+  }
+  .cabinet > h2 {
+    font-family: var(--f-mono); font-size: 10px; letter-spacing: .18em;
+    text-transform: uppercase; color: var(--muted); margin: 0;
+    padding-bottom: 7px; border-bottom: 1px solid var(--rule); font-weight: 500;
+  }
+  .finds { display: grid; grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); gap: 8px; }
+  canvas#fitness {
+    display: block; width: 100%; height: 60px;
+    border: 1px solid var(--rule); background: var(--c-ground);
+  }
+  .find {
+    border: 1px solid var(--rule); background: var(--c-ground); padding: 0;
+    display: flex; flex-direction: column; align-items: stretch; gap: 0; cursor: pointer;
+  }
+  .find:hover { border-color: var(--pen-a); }
+  .find canvas { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+  .find span {
+    font-family: var(--f-mono); font-size: 9px; color: var(--muted);
+    letter-spacing: .02em; padding: 3px 4px; background: var(--panel);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .find.glider span { color: var(--pen-b); }
+  .find.bounded span { color: var(--pen-a); }
+  .finds-empty { grid-column: 1 / -1; font-size: 13px; color: var(--muted); }
+
+  .progress {
+    grid-column: 1 / -1; height: 4px; background: var(--panel-sunk); overflow: hidden;
+  }
+  .progress i { display: block; height: 100%; background: var(--pen-a); width: 0; }
+
+  .notes {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 28px; border-top: 1px solid var(--rule); padding-top: 24px;
+  }
+  .notes section { display: flex; flex-direction: column; gap: 7px; }
+  .notes h3 { font-family: var(--f-display); font-weight: 400; font-size: 20px; margin: 0; }
+  .notes p { margin: 0; max-width: 62ch; color: var(--muted); font-size: 14px; }
+  .notes b { color: var(--ink); font-weight: 600; }
+  code {
+    font-family: var(--f-mono); font-size: .88em; background: var(--panel-sunk);
+    padding: 1px 4px; border-radius: 2px; color: var(--ink);
+  }
+
+  .colophon {
+    font-family: var(--f-mono); font-size: 11px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted);
+    border-top: 1px solid var(--rule); padding-top: 16px;
+  }
+
+  .fallback {
+    display: none; padding: 24px; border: 1px solid var(--pen-b);
+    background: var(--panel); border-radius: 3px;
+  }
+  .fallback b { color: var(--pen-b); }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Blatt 04 · Regelraum-Fallensteller</p>
+    <h1>Zoo: was im Regelraum <em>überlebt</em></h1>
+    <p class="standfirst">
+      Lenia ist ein zellulärer Automat ohne Raster im Kopf: der Zustand ist eine stetige Dichte,
+      die Nachbarschaft ein weicher Ring, das Wachstum eine Glockenkurve. Fast jeder Regelsatz
+      darin endet sofort — alles stirbt oder alles läuft über. Dazwischen liegt ein schmales Band,
+      in dem sich Dichte zu Klumpen sammelt, die zusammenhalten und wandern. Diese Seite entwirft
+      keine davon. Sie würfelt Regeln, misst, was übrig bleibt, und stellt die Funde aus.
+    </p>
+  </header>
+
+  <div id="fallback" class="fallback">
+    <b>Kein WebGL 2 verfügbar.</b> Dieses Blatt faltet jedes Bild mit einem Ringkern über
+    hunderte Stützstellen je Pixel und braucht dafür WebGL 2 mit Gleitkomma-Texturen.
+  </div>
+
+  <div class="bench" id="bench">
+
+    <div class="plate">
+      <div class="toolbar">
+        <span class="toolbar-label">Werkzeug</span>
+        <div class="tools">
+          <button id="t-add" aria-pressed="true">Masse auftragen</button>
+          <button id="t-del" aria-pressed="false">Abtragen</button>
+        </div>
+        <label class="slider-inline">
+          Pinsel <span id="l-brush">26</span>
+          <input type="range" id="i-brush" min="6" max="90" value="26" />
+        </label>
+      </div>
+      <div class="plate-canvas">
+        <canvas id="field" width="768" height="512" aria-label="Lenia-Feld"></canvas>
+      </div>
+      <dl class="readout">
+        <div class="stat"><dt>Zeit</dt><dd id="r-t">0</dd></div>
+        <div class="stat"><dt>Masse</dt><dd id="r-mass">0</dd></div>
+        <div class="stat"><dt>Ausdehnung</dt><dd id="r-spread">—</dd></div>
+        <div class="stat"><dt>Drift</dt><dd id="r-drift">—</dd></div>
+        <div class="stat"><dt>Befund</dt><dd id="r-verdict">—</dd></div>
+      </dl>
+      <div class="footbar">
+        <span class="toolbar-label">Ausgabe</span>
+        <button id="b-png" style="margin-left:auto">PNG speichern</button>
+      </div>
+    </div>
+
+    <aside class="rail">
+
+      <div class="group">
+        <h2>Lauf</h2>
+        <div class="btn-row">
+          <button id="b-play" class="primary">Pause</button>
+          <button id="b-settle">200 Schritte</button>
+        </div>
+        <div class="btn-row">
+          <button id="b-seed" style="flex:1">Neue Saat</button>
+          <button id="b-clear" style="flex:1">Feld leeren</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Regel</h2>
+        <label class="field">
+          Zentrum μ <span id="l-mu">0.150</span>
+          <input type="range" id="i-mu" min="20" max="450" value="150" />
+        </label>
+        <label class="field">
+          Breite σ <span id="l-sigma">0.017</span>
+          <input type="range" id="i-sigma" min="3" max="80" value="17" />
+        </label>
+        <label class="field">
+          Radius R <span id="l-radius">13</span>
+          <input type="range" id="i-radius" min="5" max="13" value="13" />
+        </label>
+        <label class="field">
+          Schrittweite <span id="l-dt">0.10</span>
+          <input type="range" id="i-dt" min="2" max="40" value="10" />
+        </label>
+        <label class="field">
+          Ring 1 <span id="l-b0">1.00</span>
+          <input type="range" id="i-b0" min="0" max="100" value="100" />
+        </label>
+        <label class="field">
+          Ring 2 <span id="l-b1">0.00</span>
+          <input type="range" id="i-b1" min="0" max="100" value="0" />
+        </label>
+        <label class="field">
+          Ring 3 <span id="l-b2">0.00</span>
+          <input type="range" id="i-b2" min="0" max="100" value="0" />
+        </label>
+        <div class="full">
+          <canvas id="kernel" width="280" height="56" aria-label="Kernprofil"></canvas>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Regimekarte</h2>
+        <div class="full">
+          <canvas id="regime" width="286" height="150" aria-label="Karte des Regelraums über μ und σ/μ"></canvas>
+          <p style="margin:6px 0 0;font-family:var(--f-mono);font-size:9px;letter-spacing:.06em;
+                    text-transform:uppercase;color:var(--muted)">
+            waagrecht μ · senkrecht σ/μ · voll = tragfähig, rot = überlaufen, blass = erloschen
+          </p>
+        </div>
+        <label class="field wide">
+          Kernfamilie der Karte
+          <select id="i-mapbeta">
+            <option value="1,0,0" selected>Ein Ring</option>
+            <option value="1,0.5,0">Zwei Ringe, außen schwach</option>
+            <option value="0.5,1,0">Zwei Ringe, innen schwach</option>
+            <option value="1,0.7,0.4">Drei Ringe, abfallend</option>
+          </select>
+        </label>
+        <div class="btn-row">
+          <button id="b-map" style="flex:1">Regelraum kartieren</button>
+        </div>
+      </div>
+
+      <div class="group">
+        <h2>Fallenstellen</h2>
+        <label class="field">
+          Kandidaten
+          <select id="i-cands">
+            <option value="12">12</option>
+            <option value="24" selected>24</option>
+            <option value="48">48</option>
+          </select>
+        </label>
+        <label class="field">
+          Prüflänge
+          <select id="i-plen">
+            <option value="120">120 Schritte</option>
+            <option value="240" selected>240 Schritte</option>
+            <option value="400">400 Schritte</option>
+          </select>
+        </label>
+        <p class="full" style="margin:0;font-size:12px;color:var(--muted)">
+          Die Prüflänge gilt für Karte <em>und</em> Suchlauf. Wer länger hinsieht, findet
+          weniger — das ist keine Schwäche des Geräts, sondern die Aussage.
+        </p>
+        <div class="btn-row">
+          <button id="b-hunt" class="primary" style="flex:1">Suchlauf starten</button>
+        </div>
+        <div class="progress full"><i id="hunt-bar"></i></div>
+        <div class="full" style="border-top:1px solid var(--rule);padding-top:10px;display:grid;
+                                 grid-template-columns:1fr 1fr;gap:10px 14px;align-items:end">
+          <label class="field">
+            Stufen
+            <select id="i-gens">
+              <option value="12">12</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+            </select>
+          </label>
+          <label class="field">
+            Nachkommen
+            <select id="i-kids">
+              <option value="4">4</option>
+              <option value="8" selected>8</option>
+              <option value="14">14</option>
+            </select>
+          </label>
+          <button id="b-climb" style="grid-column:1/-1">Bergsteigen</button>
+        </div>
+        <div class="full" style="font-family:var(--f-mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)"
+             id="hunt-status">bereit</div>
+      </div>
+
+    </aside>
+  </div>
+
+  <section class="cabinet">
+    <h2 id="climb-head">Abstammung</h2>
+    <canvas id="fitness" width="1100" height="60" aria-label="Güte über die Stufen"></canvas>
+    <div class="finds" id="lineage">
+      <p class="finds-empty">Noch nicht geklettert. Der Kletterer startet bei der aktuellen
+         Regel und geht bergauf — jede Stufe ist eine Verbesserung gegenüber der vorigen.</p>
+    </div>
+  </section>
+
+  <section class="cabinet">
+    <h2 id="finds-head">Vitrine</h2>
+    <div class="finds" id="finds">
+      <p class="finds-empty">Noch nichts gefunden. Erst den Regelraum kartieren, dann den
+         Suchlauf starten — er zieht dann aus den tragfähigen Feldern der Karte.</p>
+    </div>
+  </section>
+
+  <div class="notes">
+    <section>
+      <h3>Die Regel</h3>
+      <p>
+        Jede Zelle sieht ihre Umgebung durch einen <b>Ringkern</b>: nicht die acht Nachbarn,
+        sondern eine gewichtete Scheibe mit Radius R. Aus dem gewichteten Mittel <code>u</code>
+        wird das Wachstum <code>G(u) = 2·exp(−(u−μ)²/2σ²) − 1</code>, und die Dichte ändert sich
+        um <code>dt·G</code>. Positiv nur, wenn die Umgebung fast genau μ trifft — zu leer und
+        zu voll sterben beide.
+      </p>
+    </section>
+    <section>
+      <h3>Warum gesucht wird</h3>
+      <p>
+        Das Band, in dem etwas überlebt, ist schmal und krumm. Man findet es nicht durch
+        Nachdenken, sondern durch Probieren — deshalb ist der Suchlauf hier kein Zubehör,
+        sondern das eigentliche Gerät. Er würfelt μ, σ und die Ringgewichte, sät einen weichen
+        Klumpen und schaut nach.
+      </p>
+    </section>
+    <section>
+      <h3>Was als Fund zählt</h3>
+      <p>
+        Drei Messungen über die Prüflänge: die <b>Masse</b> darf weder verschwinden noch
+        davonlaufen, die <b>Ausdehnung</b> muss lokal bleiben statt das Feld zu füllen,
+        und die Masse am Ende muss zur Masse in der Mitte passen — ein Klumpen, der noch
+        wächst, ist noch nicht fertig. Wandert der Schwerpunkt dabei stetig, ist es ein
+        <b>Gleiter</b>; die sind in der Vitrine rot beschriftet.
+      </p>
+    </section>
+    <section>
+      <h3>Selber eingreifen</h3>
+      <p>
+        Ein Fund in der Vitrine lädt seinen Regelsatz ins große Feld. Von dort aus lohnt es
+        sich, an μ und σ zu drehen — die meisten Kreaturen zerfallen bei der dritten
+        Nachkommastelle. Mit dem Pinsel lässt sich Masse auftragen und sehen, was die Regel
+        daraus macht. <code>Leertaste</code> Start/Stopp, <code>S</code> Saat, <code>L</code> leeren.
+      </p>
+    </section>
+  </div>
+
+  <p class="colophon">Blatt 04 · Lenia auf der GPU, Ringkern als Kennlinie in 64 Stützstellen · Suchlauf misst Masse, Ausdehnung und Drift</p>
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  const cv = document.getElementById("field");
+  const gl = cv.getContext("webgl2", { antialias: false, preserveDrawingBuffer: true });
+  if (!gl || !gl.getExtension("EXT_color_buffer_float")) {
+    document.getElementById("fallback").style.display = "block";
+    document.getElementById("bench").style.display = "none";
+    return;
+  }
+  gl.getExtension("EXT_float_blend");
+
+  const MAXR = 13;                       // kernel loop bound, must be a compile-time constant
+  const SIM_W = cv.width, SIM_H = cv.height;
+
+  /* ========================= gl helpers ========================= */
+  function shader(type, src) {
+    const s = gl.createShader(type);
+    gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) throw new Error(gl.getShaderInfoLog(s));
+    return s;
+  }
+  function program(vs, fs) {
+    const p = gl.createProgram();
+    gl.attachShader(p, shader(gl.VERTEX_SHADER, vs));
+    gl.attachShader(p, shader(gl.FRAGMENT_SHADER, fs));
+    gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) throw new Error(gl.getProgramInfoLog(p));
+    p.u = new Proxy({}, { get: (c, n) => (n in c ? c[n] : (c[n] = gl.getUniformLocation(p, n))) });
+    return p;
+  }
+  function tex(w, h, internal, format, type, filter) {
+    const t = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    gl.texImage2D(gl.TEXTURE_2D, 0, internal, w, h, 0, format, type, null);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, filter || gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, filter || gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    return t;
+  }
+  function fbo(t) {
+    const f = gl.createFramebuffer();
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+    const st = gl.checkFramebufferStatus(gl.FRAMEBUFFER);
+    if (st !== gl.FRAMEBUFFER_COMPLETE) throw new Error("FBO unvollständig 0x" + st.toString(16));
+    return f;
+  }
+
+  /* =========================== shaders ========================== */
+  const VS = `#version 300 es
+  in vec2 aPos; out vec2 vUV;
+  void main(){ vUV = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+  const FS_STEP = `#version 300 es
+  precision highp float;
+  #define MAXR ${MAXR}
+  uniform sampler2D uA;
+  uniform vec2 uTexel;
+  uniform float uK[64];
+  uniform float uNorm, uMu, uSigma, uDt, uR;
+  in vec2 vUV; out vec4 outC;
+  void main(){
+    int R = int(uR + 0.5);
+    float sum = 0.0;
+    for (int dy = -MAXR; dy <= MAXR; dy++) {
+      if (dy < -R || dy > R) continue;
+      for (int dx = -MAXR; dx <= MAXR; dx++) {
+        if (dx < -R || dx > R) continue;
+        float rr = sqrt(float(dx * dx + dy * dy)) / uR;
+        if (rr >= 1.0) continue;
+        float w = uK[int(rr * 63.0)];
+        if (w <= 0.0) continue;
+        sum += w * texture(uA, vUV + vec2(float(dx), float(dy)) * uTexel).r;
+      }
+    }
+    float u = sum * uNorm;
+    float d = u - uMu;
+    float g = 2.0 * exp(-(d * d) / (2.0 * uSigma * uSigma)) - 1.0;
+    outC = vec4(clamp(texture(uA, vUV).r + uDt * g, 0.0, 1.0), 0.0, 0.0, 1.0);
+  }`;
+
+  const FS_DISPLAY = `#version 300 es
+  precision highp float;
+  uniform sampler2D uA;
+  uniform vec3 uGround, uPenA, uPenB, uInk;
+  in vec2 vUV; out vec4 outC;
+  void main(){
+    float a = texture(uA, vUV).r;
+    vec3 col = mix(uGround, uPenA, smoothstep(0.02, 0.55, a));
+    col = mix(col, uPenB, smoothstep(0.6, 1.0, a));
+    float g = a * 7.0;
+    float line = smoothstep(fwidth(g) * 1.2, 0.0, abs(fract(g) - 0.5));
+    col = mix(col, uInk, line * 0.16 * smoothstep(0.02, 0.10, a));
+    outC = vec4(col, 1.0);
+  }`;
+
+  // moments: A, A·x, A·y, A·r² — summed on the CPU after one readback
+  const FS_MOMENT = `#version 300 es
+  precision highp float;
+  uniform sampler2D uA;
+  in vec2 vUV; out vec4 outC;
+  void main(){
+    float a = texture(uA, vUV).r;
+    outC = vec4(a, a * vUV.x, a * vUV.y, a * dot(vUV, vUV));
+  }`;
+
+  const VS_BRUSH = `#version 300 es
+  uniform vec2 uPos; uniform float uSize;
+  void main(){ gl_Position = vec4(uPos, 0.0, 1.0); gl_PointSize = uSize; }`;
+
+  const FS_BRUSH = `#version 300 es
+  precision highp float;
+  uniform float uAmount; out vec4 outC;
+  void main(){
+    float d = length(gl_PointCoord - 0.5) * 2.0;
+    float g = exp(-d * d * 2.2) * (1.0 - step(1.0, d));
+    outC = vec4(uAmount * g, 0.0, 0.0, 1.0);
+  }`;
+
+  // a soft blob of correlated noise: the standard way to start a Lenia search
+  const FS_SEED = `#version 300 es
+  precision highp float;
+  uniform vec2 uCentre; uniform float uRadius, uScale, uSeed, uTilt, uLean;
+  in vec2 vUV; out vec4 outC;
+  float hash(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7)) + uSeed) * 43758.5453); }
+  float noise(vec2 p){
+    vec2 i = floor(p), f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1,0)), u.x),
+               mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), u.x), u.y);
+  }
+  void main(){
+    float d = length(vUV - uCentre);
+    if (d > uRadius) { outC = vec4(0.0); return; }
+    float fall = smoothstep(uRadius, uRadius * 0.35, d);
+    float n = noise(vUV * uScale) * 0.6 + noise(vUV * uScale * 2.0) * 0.4;
+    // a radially symmetric seed can only grow into something that sits still;
+    // tilting the mass to one side is what lets a traveller form at all
+    vec2 dir = vec2(cos(uTilt), sin(uTilt));
+    float lean = 1.0 + uLean * dot(dir, (vUV - uCentre) / uRadius);
+    outC = vec4(clamp(n * fall * lean * 1.6, 0.0, 1.0), 0.0, 0.0, 1.0);
+  }`;
+
+  const pStep = program(VS, FS_STEP);
+  const pDisplay = program(VS, FS_DISPLAY);
+  const pMoment = program(VS, FS_MOMENT);
+  const pBrush = program(VS_BRUSH, FS_BRUSH);
+  const pSeed = program(VS, FS_SEED);
+
+  const quadVao = gl.createVertexArray();
+  gl.bindVertexArray(quadVao);
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+  gl.enableVertexAttribArray(0);
+  gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+  gl.bindVertexArray(null);
+  const emptyVao = gl.createVertexArray();
+
+  /* ============================ fields =========================== */
+  function makeField(w, h) {
+    const a = tex(w, h, gl.R16F, gl.RED, gl.HALF_FLOAT, gl.LINEAR);
+    const b = tex(w, h, gl.R16F, gl.RED, gl.HALF_FLOAT, gl.LINEAR);
+    return { w: w, h: h, a: a, b: b, fa: fbo(a), fb: fbo(b) };
+  }
+
+  const main = makeField(SIM_W, SIM_H);
+  // Map and hunt must run the identical test, or a cell marked viable does not stay
+  // viable when the hunt draws from it. Same size, same radius, same seed geometry.
+  // Room matters: at 8 kernel radii across, an expanding colony wraps into itself within
+  // the test and its extent stops growing — it then passes as bounded. 16 radii of room
+  // is what gives the expansion test any teeth.
+  const HUNT = 96;
+  const probe = makeField(HUNT, HUNT);
+  const MAPN = 96;
+  const mapProbe = makeField(MAPN, MAPN);
+  const mapMomentTex = tex(MAPN, MAPN, gl.RGBA32F, gl.RGBA, gl.FLOAT);
+  const mapMomentFbo = fbo(mapMomentTex);
+  const mapBuf = new Float32Array(MAPN * MAPN * 4);
+  const momentTex = tex(HUNT, HUNT, gl.RGBA32F, gl.RGBA, gl.FLOAT);
+  const momentFbo = fbo(momentTex);
+  const readBuf = new Float32Array(HUNT * HUNT * 4);
+
+  /* ======================== rule parameters ===================== */
+  const RULE = { mu: 0.15, sigma: 0.017, R: 13, dt: 0.1, beta: [1, 0, 0] };
+  const kernelLUT = new Float32Array(64);
+  let kernelNorm = 1;
+
+  // K(r) = β_i · exp(−(x−½)²/2·0.15²) with i the ring the radius falls into
+  function buildKernel(rule) {
+    // the number of rings is the LENGTH of the β vector, not a constant: with a fixed 3
+    // a single-ring rule would only occupy the inner third of R and the kernel would
+    // reach a few pixels instead of R
+    let nb = 1;
+    for (let i = rule.beta.length - 1; i >= 1; i--) if (rule.beta[i] > 0) { nb = i + 1; break; }
+    for (let k = 0; k < 64; k++) {
+      const r = (k + 0.5) / 64;
+      const i = Math.min(nb - 1, Math.floor(r * nb));
+      const frac = r * nb - i;
+      const core = Math.exp(-((frac - 0.5) * (frac - 0.5)) / (2 * 0.15 * 0.15));
+      kernelLUT[k] = rule.beta[i] * core;
+    }
+    // exact discrete sum over the same taps the shader visits
+    let sum = 0;
+    const R = rule.R;
+    for (let dy = -R; dy <= R; dy++)
+      for (let dx = -R; dx <= R; dx++) {
+        const rr = Math.sqrt(dx * dx + dy * dy) / R;
+        if (rr >= 1) continue;
+        sum += kernelLUT[Math.min(63, Math.floor(rr * 63))];
+      }
+    kernelNorm = sum > 0 ? 1 / sum : 1;
+  }
+
+  function stepField(f, rule, count) {
+    gl.useProgram(pStep);
+    gl.bindVertexArray(quadVao);
+    gl.viewport(0, 0, f.w, f.h);
+    gl.uniform1fv(pStep.u.uK, kernelLUT);
+    gl.uniform1f(pStep.u.uNorm, kernelNorm);
+    gl.uniform1f(pStep.u.uMu, rule.mu);
+    gl.uniform1f(pStep.u.uSigma, rule.sigma);
+    gl.uniform1f(pStep.u.uDt, rule.dt);
+    gl.uniform1f(pStep.u.uR, rule.R);
+    gl.uniform2f(pStep.u.uTexel, 1 / f.w, 1 / f.h);
+    gl.uniform1i(pStep.u.uA, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    for (let k = 0; k < count; k++) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, f.fb);
+      gl.bindTexture(gl.TEXTURE_2D, f.a);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      const t = f.a; f.a = f.b; f.b = t;
+      const fb = f.fa; f.fa = f.fb; f.fb = fb;
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  function clearField(f) {
+    for (const target of [f.fa, f.fb]) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, target);
+      gl.viewport(0, 0, f.w, f.h);
+      gl.clearColor(0, 0, 0, 1);
+      gl.clear(gl.COLOR_BUFFER_BIT);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  function seedField(f, cx, cy, radius, scale, seed, tilt, lean) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, f.fa);
+    gl.viewport(0, 0, f.w, f.h);
+    gl.useProgram(pSeed);
+    gl.bindVertexArray(quadVao);
+    gl.uniform2f(pSeed.u.uCentre, cx, cy);
+    gl.uniform1f(pSeed.u.uRadius, radius);
+    gl.uniform1f(pSeed.u.uScale, scale);
+    gl.uniform1f(pSeed.u.uSeed, seed);
+    gl.uniform1f(pSeed.u.uTilt, tilt || 0);
+    gl.uniform1f(pSeed.u.uLean, lean === undefined ? 0 : lean);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  // The field wraps, so a straight-line centroid is wrong: a blob sitting on the seam
+  // averages out to the middle of the field and reads as "spread over everything" —
+  // which would reject exactly the creatures that travel. Circular statistics instead.
+  const TAU = Math.PI * 2;
+  function statsFrom(buf, w, h) {
+    let m = 0, sx = 0, cx = 0, sy = 0, cy = 0;
+    for (let y = 0; y < h; y++) {
+      const ay = TAU * (y + 0.5) / h, sinY = Math.sin(ay), cosY = Math.cos(ay);
+      for (let x = 0; x < w; x++) {
+        const a = buf[(y * w + x) * 4];
+        if (a <= 0) continue;
+        const ax = TAU * (x + 0.5) / w;
+        m += a;
+        sx += a * Math.sin(ax); cx += a * Math.cos(ax);
+        sy += a * sinY;         cy += a * cosY;
+      }
+    }
+    if (m <= 1e-6) return { mass: 0, cx: 0.5, cy: 0.5, spread: 0 };
+    let mx = Math.atan2(sx / m, cx / m) / TAU; if (mx < 0) mx += 1;
+    let my = Math.atan2(sy / m, cy / m) / TAU; if (my < 0) my += 1;
+
+    let v = 0;
+    for (let y = 0; y < h; y++) {
+      let dy = (y + 0.5) / h - my; if (dy > 0.5) dy -= 1; if (dy < -0.5) dy += 1;
+      for (let x = 0; x < w; x++) {
+        const a = buf[(y * w + x) * 4];
+        if (a <= 0) continue;
+        let dx = (x + 0.5) / w - mx; if (dx > 0.5) dx -= 1; if (dx < -0.5) dx += 1;
+        v += a * (dx * dx + dy * dy);
+      }
+    }
+    return { mass: m, cx: mx, cy: my, spread: Math.sqrt(v / m) };
+  }
+
+  function measureInto(f, target, targetFbo, buf) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, targetFbo);
+    gl.viewport(0, 0, f.w, f.h);
+    gl.useProgram(pMoment);
+    gl.bindVertexArray(quadVao);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, f.a);
+    gl.uniform1i(pMoment.u.uA, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.readPixels(0, 0, f.w, f.h, gl.RGBA, gl.FLOAT, buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    void target;
+    return statsFrom(buf, f.w, f.h);
+  }
+
+  function measure(f) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, momentFbo);
+    gl.viewport(0, 0, f.w, f.h);
+    gl.useProgram(pMoment);
+    gl.bindVertexArray(quadVao);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, f.a);
+    gl.uniform1i(pMoment.u.uA, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.readPixels(0, 0, f.w, f.h, gl.RGBA, gl.FLOAT, readBuf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return statsFrom(readBuf, f.w, f.h);
+  }
+
+  /* =========================== palette ========================== */
+  const COL = {};
+  function hexToRgb(h) {
+    h = h.trim().replace("#", "");
+    if (h.length === 3) h = h.split("").map((c) => c + c).join("");
+    return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255];
+  }
+  function readPalette() {
+    const cs = getComputedStyle(document.documentElement);
+    COL.ground = hexToRgb(cs.getPropertyValue("--c-ground"));
+    COL.penA = hexToRgb(cs.getPropertyValue("--c-pen-a"));
+    COL.penB = hexToRgb(cs.getPropertyValue("--c-pen-b"));
+    COL.ink = hexToRgb(cs.getPropertyValue("--c-line"));
+    COL.rule = cs.getPropertyValue("--rule").trim();
+    COL.muted = cs.getPropertyValue("--muted").trim();
+    COL.groundHex = cs.getPropertyValue("--c-ground").trim();
+    COL.penAHex = cs.getPropertyValue("--c-pen-a").trim();
+    COL.penBHex = cs.getPropertyValue("--c-pen-b").trim();
+    COL.inkHex = cs.getPropertyValue("--c-line").trim();
+    COL.mutedHex = cs.getPropertyValue("--muted").trim();
+  }
+
+  function draw() {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.viewport(0, 0, cv.width, cv.height);
+    gl.useProgram(pDisplay);
+    gl.bindVertexArray(quadVao);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, main.a);
+    gl.uniform1i(pDisplay.u.uA, 0);
+    gl.uniform3fv(pDisplay.u.uGround, COL.ground);
+    gl.uniform3fv(pDisplay.u.uPenA, COL.penA);
+    gl.uniform3fv(pDisplay.u.uPenB, COL.penB);
+    gl.uniform3fv(pDisplay.u.uInk, COL.ink);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  /* =========================== state ============================ */
+  const $ = (id) => document.getElementById(id);
+  let running = true, steps = 0, tool = "add", brush = 26;
+  let lastCentre = null, driftAvg = 0;
+  const finds = [];
+
+  function syncKernelPreview() {
+    const c = $("kernel"), g = c.getContext("2d");
+    g.fillStyle = COL.groundHex; g.fillRect(0, 0, c.width, c.height);
+    let max = 0;
+    for (let k = 0; k < 64; k++) if (kernelLUT[k] > max) max = kernelLUT[k];
+    if (max <= 0) return;
+    g.strokeStyle = COL.rule; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(0, c.height - .5); g.lineTo(c.width, c.height - .5); g.stroke();
+    g.strokeStyle = COL.penAHex; g.lineWidth = 1.6;
+    g.beginPath();
+    for (let k = 0; k < 64; k++) {
+      const x = k / 63 * (c.width - 2) + 1;
+      const y = c.height - 3 - (kernelLUT[k] / max) * (c.height - 8);
+      if (k === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    }
+    g.stroke();
+  }
+
+  function applyRule() {
+    buildKernel(RULE);
+    syncKernelPreview();
+    if (typeof drawRegime === "function") drawRegime();
+  }
+
+  function syncLabels() {
+    $("l-mu").textContent = RULE.mu.toFixed(3);
+    $("l-sigma").textContent = RULE.sigma.toFixed(3);
+    $("l-radius").textContent = String(RULE.R);
+    $("l-dt").textContent = RULE.dt.toFixed(2);
+    $("l-b0").textContent = RULE.beta[0].toFixed(2);
+    $("l-b1").textContent = RULE.beta[1].toFixed(2);
+    $("l-b2").textContent = RULE.beta[2].toFixed(2);
+    $("l-brush").textContent = String(brush);
+  }
+
+  function pushRuleToInputs() {
+    $("i-mu").value = Math.round(RULE.mu * 1000);
+    $("i-sigma").value = Math.round(RULE.sigma * 1000);
+    $("i-radius").value = RULE.R;
+    $("i-dt").value = Math.round(RULE.dt * 100);
+    $("i-b0").value = Math.round(RULE.beta[0] * 100);
+    $("i-b1").value = Math.round(RULE.beta[1] * 100);
+    $("i-b2").value = Math.round(RULE.beta[2] * 100);
+  }
+
+  function verdict(m) {
+    if (m.mass < 2) return ["erloschen", "warn"];
+    if (m.spread > 0.32) return ["überlaufen", "warn"];
+    if (driftAvg > 0.00035) return ["Gleiter", "good"];
+    return ["stabil", "good"];
+  }
+
+  function readout(force) {
+    if (!force && (steps & 7)) return;
+    const m = measureMain();
+    $("r-t").textContent = (steps * RULE.dt).toFixed(1);
+    $("r-mass").textContent = m.mass.toFixed(0);
+    $("r-spread").textContent = m.spread.toFixed(3);
+    if (lastCentre) {
+      let dx = m.cx - lastCentre.x, dy = m.cy - lastCentre.y;
+      if (dx > 0.5) dx -= 1; if (dx < -0.5) dx += 1;
+      if (dy > 0.5) dy -= 1; if (dy < -0.5) dy += 1;
+      const d = Math.sqrt(dx * dx + dy * dy) / 8;
+      driftAvg = driftAvg * 0.8 + d * 0.2;
+      $("r-drift").textContent = driftAvg.toFixed(5);
+    }
+    lastCentre = { x: m.cx, y: m.cy };
+    const v = verdict(m);
+    const el = $("r-verdict");
+    el.textContent = v[0];
+    el.className = v[1];
+  }
+
+  // the main field is too large to read back every frame; sample it through the probe size
+  const mainMoment = { tex: null, fbo: null, buf: null };
+  function measureMain() {
+    if (!mainMoment.tex) {
+      mainMoment.tex = tex(SIM_W, SIM_H, gl.RGBA32F, gl.RGBA, gl.FLOAT);
+      mainMoment.fbo = fbo(mainMoment.tex);
+      mainMoment.buf = new Float32Array(SIM_W * SIM_H * 4);
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    }
+    gl.bindFramebuffer(gl.FRAMEBUFFER, mainMoment.fbo);
+    gl.viewport(0, 0, SIM_W, SIM_H);
+    gl.useProgram(pMoment);
+    gl.bindVertexArray(quadVao);
+    gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, main.a);
+    gl.uniform1i(pMoment.u.uA, 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.readPixels(0, 0, SIM_W, SIM_H, gl.RGBA, gl.FLOAT, mainMoment.buf);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    return statsFrom(mainMoment.buf, SIM_W, SIM_H);
+  }
+
+  /* ======================= the regime map ======================= */
+  // Random sampling of (μ, σ) mostly draws from the dead or the flooded part of the
+  // space. Mapping it once, coarsely, shows where the narrow survivable band runs —
+  // and the hunt can then draw from inside it instead of guessing.
+  const MAP_W = 30, MAP_H = 20;
+  const MU_LO = 0.05, MU_HI = 0.42, REL_LO = 0.03, REL_HI = 0.25;
+  const regime = new Uint8Array(MAP_W * MAP_H);   // 0 unknown 1 dead 2 alive 3 flood 4 frayed
+  let regimeReady = false;
+  let coreCells = [], ringCells = [];
+  // the map is only valid for the kernel it was drawn with, so the hunt uses the same one
+  let mapBeta = [1, 0, 0];
+
+  const muAt = (i) => MU_LO + (i + 0.5) / MAP_W * (MU_HI - MU_LO);
+  const relAt = (j) => REL_LO + (j + 0.5) / MAP_H * (REL_HI - REL_LO);
+
+  // Map and hunt must also agree on how long they look: a colony that grows slowly
+  // passes a short test and fails a long one, so a fixed mismatch guarantees that the
+  // hunt discards whatever the map found.
+  const testLen = () => +$("i-plen").value;
+
+  function classifyCell(mu, rel) {
+    const rule = { mu: mu, sigma: mu * rel, R: 6, dt: 0.1, beta: mapBeta };
+    buildKernel(rule);
+    clearField(mapProbe);
+    seedField(mapProbe, 0.5, 0.5, 0.16, MAPN / rule.R * 0.9, 42, 0, 0);
+    // must not be much shorter than the hunt: a cell that survives 90 steps but dies by
+    // 240 gets mapped as viable and then rejected, which is where the hit rate goes
+    const half = testLen() >> 1;
+    stepField(mapProbe, rule, half);
+    const mid = measureInto(mapProbe, mapMomentTex, mapMomentFbo, mapBuf);
+    stepField(mapProbe, rule, testLen() - half);
+    const late = measureInto(mapProbe, mapMomentTex, mapMomentFbo, mapBuf);
+
+    const area = MAPN * MAPN;
+    if (late.mass < area * 0.004) return 1;
+    if (late.mass > area * 0.30) return 3;
+    if (late.spread > 0.24) return 4;
+    const ratio = mid.mass > 0 ? late.mass / mid.mass : 0;
+    if (ratio < 0.75) return 4;
+    // 2 = extent has stopped growing, 5 = survives but still spreading
+    return (mid.spread > 0 && late.spread / mid.spread < 1.06 && ratio < 1.25) ? 2 : 5;
+  }
+
+  function drawRegime() {
+    const c = $("regime"), g = c.getContext("2d");
+    const cw = c.width / MAP_W, ch = c.height / MAP_H;
+    const fill = { 0: COL.groundHex, 1: COL.groundHex, 2: COL.penAHex, 3: COL.penBHex, 4: COL.mutedHex, 5: COL.penAHex };
+    const alpha = { 0: 0.0, 1: 0.10, 2: 1.0, 3: 0.55, 4: 0.22, 5: 0.45 };
+    g.fillStyle = COL.groundHex; g.fillRect(0, 0, c.width, c.height);
+    for (let j = 0; j < MAP_H; j++)
+      for (let i = 0; i < MAP_W; i++) {
+        const v = regime[j * MAP_W + i];
+        g.globalAlpha = alpha[v];
+        g.fillStyle = fill[v];
+        g.fillRect(i * cw, c.height - (j + 1) * ch, Math.ceil(cw), Math.ceil(ch));
+      }
+    g.globalAlpha = 1;
+    // where the current rule sits
+    const i = (RULE.mu - MU_LO) / (MU_HI - MU_LO) * c.width;
+    const j = ((RULE.sigma / RULE.mu) - REL_LO) / (REL_HI - REL_LO) * c.height;
+    g.strokeStyle = COL.inkHex; g.lineWidth = 1;
+    g.beginPath(); g.arc(i, c.height - j, 4, 0, 7); g.stroke();
+  }
+
+  async function scanRegime() {
+    if (hunting) return;
+    hunting = true;
+    $("b-map").disabled = true; $("b-hunt").disabled = true;
+    const saved = { lut: Float32Array.from(kernelLUT), norm: kernelNorm };
+    let alive = 0, colonies = 0;
+    for (let j = 0; j < MAP_H; j++) {
+      for (let i = 0; i < MAP_W; i++) {
+        const v = classifyCell(muAt(i), relAt(j));
+        regime[j * MAP_W + i] = v;
+        if (v === 2) alive++; else if (v === 5) colonies++;
+      }
+      drawRegime();
+      $("hunt-bar").style.width = Math.round(100 * (j + 1) / MAP_H) + "%";
+      $("hunt-status").textContent = "kartiere · Zeile " + (j + 1) + " von " + MAP_H;
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    kernelLUT.set(saved.lut); kernelNorm = saved.norm;
+
+    // Two pools: the viable cells themselves, and the ring around them. The ridge is
+    // thinner than the grid, so the ring holds untried variants — but it also touches
+    // the death boundary, so it must not dominate the draw.
+    coreCells = [];
+    const ring = new Set();
+    for (let k = 0; k < regime.length; k++) {
+      if (regime[k] !== 2 && regime[k] !== 5) continue;
+      coreCells.push(k);
+      const i = k % MAP_W, j = (k / MAP_W) | 0;
+      for (let dj = -1; dj <= 1; dj++)
+        for (let di = -1; di <= 1; di++) {
+          const ni = i + di, nj = j + dj;
+          if (ni < 0 || nj < 0 || ni >= MAP_W || nj >= MAP_H) continue;
+          const nk = nj * MAP_W + ni;
+          if (regime[nk] !== 2 && regime[nk] !== 5) ring.add(nk);
+        }
+    }
+    ringCells = [...ring];
+    regimeReady = coreCells.length > 0;
+    $("hunt-status").textContent = "Karte fertig · " + alive + " begrenzt · " +
+      colonies + " Kolonien · von " + (MAP_W * MAP_H) + " Feldern";
+    $("b-map").disabled = false; $("b-hunt").disabled = false;
+    hunting = false;
+    drawRegime();
+  }
+
+  /* ========================== the hunt ========================== */
+  let hunting = false;
+
+  function randomRule(rnd) {
+    const beta = mapBeta.slice();
+    // Draw from a cell the map marked as viable, jittered inside that cell. Without a
+    // map, fall back to the coupled band — σ is not independent of μ.
+    let mu, rel;
+    if (regimeReady) {
+      // The ridge is thinner than a cell, so jittering across the whole cell lands most
+      // draws back in the dead zone. Stay near the centre that was actually verified.
+      const useRing = ringCells.length && rnd() < 0.25;
+      const pool = useRing ? ringCells : coreCells;
+      const k = pool[Math.floor(rnd() * pool.length)];
+      const i = k % MAP_W, j = (k / MAP_W) | 0;
+      const jit = () => 0.5 + (rnd() - 0.5) * 0.5;
+      mu = MU_LO + (i + jit()) / MAP_W * (MU_HI - MU_LO);
+      rel = REL_LO + (j + jit()) / MAP_H * (REL_HI - REL_LO);
+    } else {
+      mu = 0.10 + rnd() * 0.25;
+      rel = 0.06 + rnd() * 0.22;
+    }
+    return { mu: mu, sigma: mu * rel, R: 6, dt: 0.1, beta: beta };
+  }
+
+  function evaluate(rule, plen, seedNum, lean) {
+    const saved = { lut: Float32Array.from(kernelLUT), norm: kernelNorm };
+    buildKernel(rule);
+    clearField(probe);
+    // seed structure must sit at the kernel's own scale — finer noise is simply
+    // averaged away in the first few steps and everything reads as extinction
+    seedField(probe, 0.5, 0.5, 0.16, HUNT / rule.R * 0.9, seedNum, seedNum * 0.037, lean);
+
+    const half = Math.floor(plen / 2);
+    stepField(probe, rule, 40);
+    const early = measure(probe);
+    stepField(probe, rule, half - 40);
+    const mid = measure(probe);
+    stepField(probe, rule, plen - half);
+    const late = measure(probe);
+
+    kernelLUT.set(saved.lut); kernelNorm = saved.norm;
+
+    let dx = late.cx - mid.cx, dy = late.cy - mid.cy;
+    if (dx > 0.5) dx -= 1; if (dx < -0.5) dx += 1;
+    if (dy > 0.5) dy -= 1; if (dy < -0.5) dy += 1;
+    const drift = Math.sqrt(dx * dx + dy * dy) / (plen - half);
+
+    const area = HUNT * HUNT;
+    const ratio = mid.mass > 0 ? late.mass / mid.mass : 0;
+    let reason = null;
+    if (late.mass < area * 0.004) reason = "erloschen";
+    else if (late.mass > area * 0.30) reason = "überlaufen";
+    else if (late.spread > 0.24) reason = "zerfasert";
+    else if (ratio < 0.75) reason = "schrumpft";
+
+    // Mass alone cannot separate a bounded creature from an expanding colony: in a
+    // periodic field expansion wraps into itself and saturates. The growth of the
+    // extent does not — so that distinction is kept, not used to reject.
+    const bounded = mid.spread > 0 && late.spread / mid.spread < 1.06 && ratio < 1.25;
+
+    // a traveller must cover clearly more than its own size in the second half
+    const travel = Math.sqrt(dx * dx + dy * dy);
+
+    const grow = mid.spread > 0 ? late.spread / mid.spread : 0;
+    return {
+      ok: reason === null,
+      reason: reason,
+      bounded: bounded,
+      glider: reason === null && travel > 1.5 * late.spread,
+      mass: late.mass, spread: late.spread, drift: drift, travel: travel,
+      grow: grow, massRatio: ratio,
+      score: scoreOf(reason, grow, ratio, late.spread, travel),
+      cx: late.cx, cy: late.cy
+    };
+  }
+
+  // A pass/fail test gives a climber nothing to walk along. This turns the same
+  // measurements into one number: expansion is the main sin, compactness a mild
+  // preference, travel a bonus.
+  function scoreOf(reason, grow, ratio, spread, travel) {
+    if (reason === "erloschen" || reason === "überlaufen") return -1;
+    let s = 1;
+    s -= 6.0 * Math.max(0, grow - 1.02);
+    s -= 2.0 * Math.abs(ratio - 1);
+    s -= 1.5 * Math.max(0, spread - 0.10);
+    s += 0.5 * Math.min(1, travel / Math.max(spread, 1e-6));
+    return s;
+  }
+
+  // crop around the creature, wrapping — a find is a few pixels wide in a 96² field
+  const THUMB = 40;
+  const thumbnail = (cx, cy) => thumbnailFrom(cx, cy, readBuf);
+  function thumbnailFrom(cx, cy, buf) {
+    const c = document.createElement("canvas");
+    c.width = c.height = THUMB;
+    const g = c.getContext("2d");
+    const img = g.createImageData(THUMB, THUMB);
+    const gr = COL.ground, pa = COL.penA, pb = COL.penB;
+    const half = THUMB >> 1;
+    const cxPx = Math.round(cx * HUNT), cyPx = Math.round(cy * HUNT);
+    for (let y = 0; y < THUMB; y++) {
+      const sy = (((cyPx + half - y) % HUNT) + HUNT) % HUNT;   // readPixels is bottom-up
+      for (let x = 0; x < THUMB; x++) {
+        const sx = (((cxPx - half + x) % HUNT) + HUNT) % HUNT;
+        const src = (sy * HUNT + sx) * 4;
+        const a = Math.min(1, buf[src]);
+        const t1 = Math.min(1, Math.max(0, (a - 0.02) / 0.53));
+        const t2 = Math.min(1, Math.max(0, (a - 0.6) / 0.4));
+        const o = (y * THUMB + x) * 4;
+        for (let k = 0; k < 3; k++) {
+          const base = gr[k] + (pa[k] - gr[k]) * t1;
+          img.data[o + k] = Math.round(255 * (base + (pb[k] - base) * t2));
+        }
+        img.data[o + 3] = 255;
+      }
+    }
+    g.putImageData(img, 0, 0);
+    return c;
+  }
+
+  function renderFinds() {
+    const host = $("finds");
+    host.textContent = "";
+    $("finds-head").textContent = "Vitrine · " + finds.length;
+    if (!finds.length) {
+      const p = document.createElement("p");
+      p.className = "finds-empty";
+      p.textContent = "Noch nichts gefunden. Der Suchlauf würfelt Regelsätze im interessanten Band und behält, was zusammenhält.";
+      host.append(p);
+      return;
+    }
+    finds.forEach((f, i) => {
+      const b = document.createElement("button");
+      b.className = "find" + (f.glider ? " glider" : "") + (f.bounded ? " bounded" : "");
+      b.type = "button";
+      b.title = (f.bounded ? "begrenzt" : "wächst noch, Ausdehnung ×" + f.stats.grow.toFixed(2)) +
+                " · μ " + f.rule.mu.toFixed(3) + " · σ " + f.rule.sigma.toFixed(3) +
+                " · β " + f.rule.beta.map((x) => x.toFixed(2)).join("/");
+      b.append(f.thumb);
+      const s = document.createElement("span");
+      s.textContent = (f.glider ? "◆ " : (f.bounded ? "● " : "")) +
+                      f.rule.mu.toFixed(2) + "/" + f.rule.sigma.toFixed(3);
+      b.append(s);
+      b.addEventListener("click", () => loadFind(i));
+      host.append(b);
+    });
+  }
+
+  function loadFind(i) {
+    const f = finds[i];
+    RULE.mu = f.rule.mu; RULE.sigma = f.rule.sigma;
+    // keep the radius it was verified at — showing it bigger would show something untested
+    RULE.beta = f.rule.beta.slice(); RULE.R = f.rule.R; RULE.dt = f.rule.dt;
+    pushRuleToInputs(); syncLabels(); applyRule();
+    clearField(main);
+    seedField(main, 0.5, 0.5, 0.10, SIM_W / RULE.R * 0.9 * 0.10 / 0.22, f.seed, f.seed * 0.037, f.lean || 0);
+    steps = 0; lastCentre = null; driftAvg = 0;
+    draw(); readout(true);
+  }
+
+  async function hunt() {
+    if (hunting) return;
+    hunting = true;
+    $("b-hunt").disabled = true;
+    const total = +$("i-cands").value, plen = +$("i-plen").value;
+    // NOT a plain LCG: seed * 1103515245 exceeds 2^53, so the product is rounded and the
+    // sequence degenerates. Math.imul keeps every step exact.
+    let seed = (Date.now() % 100000) | 0;
+    const rnd = () => {
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+    let found = 0;
+    const tally = {};
+
+    for (let k = 0; k < total; k++) {
+      const rule = randomRule(rnd);
+      const seedNum = Math.floor(rnd() * 1000);
+      const lean = rnd() < 0.5 ? 0 : rnd() * 0.35;   // half symmetric, half tilted
+      const res = evaluate(rule, plen, seedNum, lean);
+      if (res.ok) {
+        found++;
+        finds.unshift({ rule: rule, seed: seedNum, lean: lean, glider: res.glider,
+                        bounded: res.bounded, thumb: thumbnail(res.cx, res.cy), stats: res });
+        if (finds.length > 24) finds.pop();
+        renderFinds();
+      } else tally[res.reason] = (tally[res.reason] || 0) + 1;
+      $("hunt-bar").style.width = Math.round(100 * (k + 1) / total) + "%";
+      $("hunt-status").textContent = (k + 1) + " von " + total + " geprüft · " + found + " behalten";
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    const breakdown = Object.keys(tally).map((k) => tally[k] + " " + k).join(" · ");
+    $("hunt-status").textContent = "fertig · " + found + " von " + total + " behalten" +
+      (breakdown ? " · verworfen: " + breakdown : "");
+    $("b-hunt").disabled = false;
+    hunting = false;
+    buildKernel(RULE);
+  }
+
+  /* ========================= hill climbing ====================== */
+  // The viable band is a thin but connected ridge. Hitting it by chance is hopeless;
+  // walking along it is not. Each generation wiggles the current rule, keeps the best
+  // child if it beats the parent, and shrinks the step when it does not.
+  const CLIMB_SEEDS = [17, 233];
+  let lineage = [];
+  let climbing = false, climbStop = false;
+
+  function evalRule(rule, plen) {
+    let sum = 0, last = null, snap = null;
+    for (const sd of CLIMB_SEEDS) {
+      const res = evaluate(rule, plen, sd, 0);
+      sum += res.score;
+      if (last === null || res.score > last.score) { last = res; snap = Float32Array.from(readBuf); }
+    }
+    return { score: sum / CLIMB_SEEDS.length, best: last, snap: snap };
+  }
+
+  function mutate(rule, step, rnd) {
+    const g = () => (rnd() + rnd() + rnd() + rnd() - 2) * 0.7;   // rough normal
+    const beta = rule.beta.map((b, i) => i === 0 ? b : Math.max(0, Math.min(1, b + g() * step)));
+    return {
+      mu: Math.max(0.02, Math.min(0.60, rule.mu * Math.exp(g() * step))),
+      sigma: Math.max(0.002, Math.min(0.20, rule.sigma * Math.exp(g() * step))),
+      R: rule.R, dt: rule.dt, beta: beta
+    };
+  }
+
+  function renderLineage() {
+    const host = $("lineage");
+    host.textContent = "";
+    $("climb-head").textContent = "Abstammung · " + (lineage.length ? lineage.length + " Stufen" : "leer");
+    if (!lineage.length) {
+      const p = document.createElement("p");
+      p.className = "finds-empty";
+      p.textContent = "Noch nicht geklettert. Der Kletterer startet bei der aktuellen Regel und geht bergauf.";
+      host.append(p);
+      return;
+    }
+    lineage.forEach((e, i) => {
+      const b = document.createElement("button");
+      b.className = "find" + (e.res.bounded ? " bounded" : "") + (e.res.glider ? " glider" : "");
+      b.type = "button";
+      b.title = "Stufe " + i + " · Güte " + e.score.toFixed(3) +
+                " · Ausdehnung ×" + e.res.grow.toFixed(3) +
+                " · μ " + e.rule.mu.toFixed(4) + " · σ " + e.rule.sigma.toFixed(4);
+      b.append(e.thumb);
+      const s = document.createElement("span");
+      s.textContent = i + " · " + e.score.toFixed(2);
+      b.append(s);
+      b.addEventListener("click", () => {
+        RULE.mu = e.rule.mu; RULE.sigma = e.rule.sigma;
+        RULE.beta = e.rule.beta.slice(); RULE.R = e.rule.R; RULE.dt = e.rule.dt;
+        pushRuleToInputs(); syncLabels(); applyRule();
+        clearField(main);
+        seedField(main, 0.5, 0.5, 0.16, SIM_W / RULE.R * 0.9 * 0.16 / 0.16, CLIMB_SEEDS[0], 0, 0);
+        steps = 0; lastCentre = null; driftAvg = 0; draw(); readout(true);
+      });
+      host.append(b);
+    });
+    drawFitness();
+  }
+
+  function drawFitness() {
+    const c = $("fitness"), g = c.getContext("2d");
+    g.fillStyle = COL.groundHex; g.fillRect(0, 0, c.width, c.height);
+    if (lineage.length < 2) return;
+    let lo = Infinity, hi = -Infinity;
+    for (const e of lineage) { if (e.score < lo) lo = e.score; if (e.score > hi) hi = e.score; }
+    if (hi - lo < 1e-6) { hi = lo + 1e-6; }
+    g.strokeStyle = COL.penAHex; g.lineWidth = 1.6;
+    g.beginPath();
+    lineage.forEach((e, i) => {
+      const x = i / (lineage.length - 1) * (c.width - 2) + 1;
+      const y = c.height - 3 - (e.score - lo) / (hi - lo) * (c.height - 8);
+      if (i === 0) g.moveTo(x, y); else g.lineTo(x, y);
+    });
+    g.stroke();
+  }
+
+  async function climb() {
+    if (climbing || hunting) return;
+    climbing = true; climbStop = false;
+    $("b-climb").textContent = "Anhalten";
+    $("b-hunt").disabled = true; $("b-map").disabled = true;
+
+    const plen = testLen();
+    const gens = +$("i-gens").value, kids = +$("i-kids").value;
+    let seed = 20260812;
+    const rnd = () => {
+      seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+
+    const savedLut = Float32Array.from(kernelLUT), savedNorm = kernelNorm;
+    let cur = { mu: RULE.mu, sigma: RULE.sigma, R: 6, dt: RULE.dt, beta: RULE.beta.slice() };
+    let curEval = evalRule(cur, plen);
+    lineage = [{ rule: cur, score: curEval.score, res: curEval.best,
+                 thumb: thumbnailFrom(curEval.best.cx, curEval.best.cy, curEval.snap) }];
+    renderLineage();
+
+    let step = 0.14, stalled = 0;
+    for (let gen = 1; gen <= gens && !climbStop; gen++) {
+      let bestKid = null;
+      for (let k = 0; k < kids && !climbStop; k++) {
+        const cand = mutate(cur, step, rnd);
+        const ev = evalRule(cand, plen);
+        if (!bestKid || ev.score > bestKid.score) bestKid = { rule: cand, ...ev };
+      }
+      if (bestKid && bestKid.score > curEval.score + 1e-4) {
+        cur = bestKid.rule; curEval = bestKid; stalled = 0;
+        step = Math.min(0.25, step * 1.15);
+        lineage.push({ rule: cur, score: curEval.score, res: curEval.best,
+                       thumb: thumbnailFrom(curEval.best.cx, curEval.best.cy, curEval.snap) });
+        renderLineage();
+      } else {
+        stalled++;
+        step *= 0.78;
+      }
+      $("hunt-bar").style.width = Math.round(100 * gen / gens) + "%";
+      $("hunt-status").textContent = "Stufe " + gen + "/" + gens + " · Güte " +
+        curEval.score.toFixed(3) + " · Schrittweite " + step.toFixed(3) +
+        (stalled ? " · " + stalled + "× ohne Fortschritt" : "");
+      if (step < 0.004) { $("hunt-status").textContent += " · ausgereizt"; break; }
+      await new Promise((r) => setTimeout(r, 0));
+    }
+
+    kernelLUT.set(savedLut); kernelNorm = savedNorm;
+    RULE.mu = cur.mu; RULE.sigma = cur.sigma; RULE.beta = cur.beta.slice();
+    pushRuleToInputs(); syncLabels(); applyRule();
+
+    $("b-climb").textContent = "Bergsteigen";
+    $("b-hunt").disabled = false; $("b-map").disabled = false;
+    climbing = false;
+  }
+
+  /* =========================== controls ========================= */
+  function setTool(n) {
+    tool = n;
+    $("t-add").setAttribute("aria-pressed", String(n === "add"));
+    $("t-del").setAttribute("aria-pressed", String(n === "del"));
+  }
+
+  function brushAt(nx, ny, amount, size) {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, main.fa);
+    gl.viewport(0, 0, main.w, main.h);
+    gl.useProgram(pBrush);
+    gl.bindVertexArray(emptyVao);
+    gl.uniform2f(pBrush.u.uPos, nx * 2 - 1, 1 - ny * 2);
+    gl.uniform1f(pBrush.u.uSize, size);
+    const erase = amount < 0;
+    gl.uniform1f(pBrush.u.uAmount, erase ? 1 : amount);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(erase ? gl.ZERO : gl.ONE, erase ? gl.ONE_MINUS_SRC_COLOR : gl.ONE);
+    gl.drawArrays(gl.POINTS, 0, 1);
+    gl.disable(gl.BLEND);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  }
+
+  let painting = false;
+  function paint(e) {
+    const r = cv.getBoundingClientRect();
+    const nx = (e.clientX - r.left) / r.width, ny = (e.clientY - r.top) / r.height;
+    if (nx < 0 || ny < 0 || nx > 1 || ny > 1) return;
+    brushAt(nx, ny, tool === "add" ? 0.9 : -1, brush);
+    if (!running) draw();
+  }
+  cv.addEventListener("pointerdown", (e) => { painting = true; cv.setPointerCapture(e.pointerId); paint(e); });
+  cv.addEventListener("pointermove", (e) => { if (painting) paint(e); });
+  cv.addEventListener("pointerup", () => { painting = false; });
+  cv.addEventListener("pointercancel", () => { painting = false; });
+
+  $("t-add").addEventListener("click", () => setTool("add"));
+  $("t-del").addEventListener("click", () => setTool("del"));
+  $("i-brush").addEventListener("input", (e) => { brush = +e.target.value; syncLabels(); });
+
+  $("b-play").addEventListener("click", () => {
+    running = !running;
+    $("b-play").textContent = running ? "Pause" : "Start";
+  });
+  $("b-settle").addEventListener("click", () => {
+    stepField(main, RULE, 200); steps += 200; draw(); readout(true);
+  });
+  $("b-clear").addEventListener("click", () => {
+    clearField(main); steps = 0; lastCentre = null; driftAvg = 0; draw(); readout(true);
+  });
+  $("b-seed").addEventListener("click", () => {
+    clearField(main);
+    seedField(main, 0.5, 0.5, 0.10, 60, Math.floor(Math.random() * 1000));
+    steps = 0; lastCentre = null; driftAvg = 0; draw(); readout(true);
+  });
+
+  const bind = (id, apply) => $(id).addEventListener("input", (e) => {
+    apply(+e.target.value); syncLabels(); applyRule(); if (!running) draw();
+  });
+  bind("i-mu", (v) => { RULE.mu = v / 1000; });
+  bind("i-sigma", (v) => { RULE.sigma = v / 1000; });
+  bind("i-radius", (v) => { RULE.R = v; });
+  bind("i-dt", (v) => { RULE.dt = v / 100; });
+  bind("i-b0", (v) => { RULE.beta[0] = v / 100; });
+  bind("i-b1", (v) => { RULE.beta[1] = v / 100; });
+  bind("i-b2", (v) => { RULE.beta[2] = v / 100; });
+
+  $("b-hunt").addEventListener("click", hunt);
+  $("b-map").addEventListener("click", scanRegime);
+  $("b-climb").addEventListener("click", () => { if (climbing) climbStop = true; else climb(); });
+  $("i-mapbeta").addEventListener("change", (e) => {
+    mapBeta = e.target.value.split(",").map(Number);
+    regimeReady = false; regime.fill(0); coreCells = []; ringCells = [];
+    drawRegime();
+    $("hunt-status").textContent = "Kernfamilie geändert · Karte neu zeichnen";
+  });
+
+  $("regime").addEventListener("click", (e) => {
+    const c = $("regime"), r = c.getBoundingClientRect();
+    const fx = (e.clientX - r.left) / r.width, fy = 1 - (e.clientY - r.top) / r.height;
+    RULE.mu = MU_LO + fx * (MU_HI - MU_LO);
+    RULE.sigma = RULE.mu * (REL_LO + fy * (REL_HI - REL_LO));
+    pushRuleToInputs(); syncLabels(); applyRule(); drawRegime();
+    if (!running) draw();
+  });
+
+  $("b-png").addEventListener("click", () => {
+    draw();
+    const a = document.createElement("a");
+    a.download = "zoo-" + RULE.mu.toFixed(3) + "-" + RULE.sigma.toFixed(3) + ".png";
+    a.href = cv.toDataURL("image/png");
+    a.click();
+  });
+
+  addEventListener("keydown", (e) => {
+    if (e.target.matches("input, select, textarea")) return;
+    if (e.code === "Space") { e.preventDefault(); $("b-play").click(); }
+    else if (e.key === "s" || e.key === "S") $("b-seed").click();
+    else if (e.key === "l" || e.key === "L") $("b-clear").click();
+  });
+
+  function refreshTheme() { readPalette(); syncKernelPreview(); drawRegime(); draw(); }
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", refreshTheme);
+  new MutationObserver(refreshTheme).observe(document.documentElement, {
+    attributes: true, attributeFilter: ["data-theme"]
+  });
+
+  /* ============================= loop =========================== */
+  const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function loop() {
+    if (running && !hunting) { stepField(main, RULE, 2); steps += 2; readout(false); }
+    draw();
+    requestAnimationFrame(loop);
+  }
+
+  readPalette();
+  applyRule();
+  syncLabels();
+  renderLineage();
+  clearField(main);
+  seedField(main, 0.5, 0.5, 0.10, 60, 7);
+  if (reduceMotion) { running = false; $("b-play").textContent = "Start"; }
+  draw(); readout(true);
+  requestAnimationFrame(loop);
+})();
+</script>
