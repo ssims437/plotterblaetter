@@ -279,6 +279,8 @@
           <button id="t-probe" aria-pressed="false">Sonde</button>
           <button id="t-src" aria-pressed="false">Quellpunkt</button>
         </div>
+        <span id="kappung" style="display:none;color:var(--pen-b);font-family:var(--f-mono);
+              font-size:10px;letter-spacing:.1em;text-transform:uppercase"></span>
         <label class="toolbar-brush">
           Pinsel <span id="l-brush">4</span>
           <input type="range" id="i-brush" min="1" max="14" value="4" />
@@ -553,6 +555,7 @@
   // one flat buffer of segments per contour level: x0,y0,x1,y1 …
   const SEGCAP = 60000;
   const segBuf = new Float32Array(SEGCAP * 4);
+  let gekappt = false;              // stille Kürzung wäre eine Lüge im Bild
 
   function contour(level) {
     let n = 0;
@@ -573,7 +576,7 @@
         const bx = x + (level - d) / (c - d);          // bottom (d→c)
         const ly = y + (level - a) / (d - a);          // left   (a→d)
         const o = n * 4;
-        if (n + 2 >= SEGCAP) return n;
+        if (n + 2 >= SEGCAP) { gekappt = true; return n; }
 
         switch (idx) {
           case 1: case 14:
@@ -638,6 +641,7 @@
     ctx.fillStyle = P.ground;
     ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.lineCap = "round";
+    gekappt = false;
 
     const ref = Math.max(0.02, peakRef);
     for (let k = 0; k < BASE.length; k++) {
@@ -712,6 +716,9 @@
     $("r-lambda").textContent = (COURANT / freq).toFixed(1) + " Z";
     $("r-peak").textContent = peak.toFixed(3);
     $("r-cfl").textContent = COURANT.toFixed(2);
+    const kap = $("kappung");
+    kap.textContent = gekappt ? "Linien gekappt — Zeichenpuffer voll, Bild unvollständig" : "";
+    kap.style.display = gekappt ? "" : "none";
     if (probeI < 0) { $("r-probe").textContent = "—"; return; }
     let mn = Infinity, mx = -Infinity;
     for (let k = 0; k < hist.length; k++) { const v = hist[k]; if (v < mn) mn = v; if (v > mx) mx = v; }

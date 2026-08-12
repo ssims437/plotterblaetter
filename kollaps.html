@@ -273,6 +273,7 @@
         <div class="stat"><dt>Neustarts</dt><dd id="r-restart">0</dd></div>
         <div class="stat"><dt>Muster</dt><dd id="r-pat">16</dd></div>
         <div class="stat"><dt>Seed</dt><dd id="r-seed">—</dd></div>
+        <div class="stat"><dt>Prüfung</dt><dd id="r-pruef">—</dd></div>
       </dl>
       <div class="footbar">
         <span class="toolbar-label">Ausgabe</span>
@@ -898,6 +899,33 @@
     return false;
   }
 
+  // Prüft das fertige Raster gegen die Regeln selbst, statt dem Solver zu glauben:
+  // jedes benachbarte Paar muss laut Kompatibilitätstabelle zusammenpassen. Findet
+  // Fehler in Ausbreitung und Rücksprung, die man dem Bild nicht ansieht.
+  function pruefe() {
+    const cells = cellCount();
+    let offen = 0, verletzt = 0, geprueft = 0;
+    const wahl = new Int32Array(cells).fill(-1);
+    for (let i = 0; i < cells; i++) {
+      if (cnt[i] !== 1) { offen++; continue; }
+      for (let p = 0; p < M.n; p++) if (bitGet(wave, i * M.words, p)) { wahl[i] = p; break; }
+    }
+    for (let i = 0; i < cells; i++) {
+      if (wahl[i] < 0) continue;
+      const x = i % S.w, y = (i / S.w) | 0;
+      for (let d = 0; d < 4; d++) {
+        let nx = x + DIRS[d][0], ny = y + DIRS[d][1];
+        if (M.wrap) { nx = (nx + S.w) % S.w; ny = (ny + S.h) % S.h; }
+        else if (nx < 0 || ny < 0 || nx >= S.w || ny >= S.h) continue;
+        const j = ny * S.w + nx;
+        if (wahl[j] < 0) continue;
+        geprueft++;
+        if (!bitGet(M.prop[d], wahl[i] * M.words, wahl[j])) verletzt++;
+      }
+    }
+    return { offen, verletzt, geprueft };
+  }
+
   function step(atCell) {
     if (S.finished || S.dead) return false;
     const i = atCell !== undefined ? atCell : pickCell();
@@ -1109,6 +1137,11 @@
     rs.classList.toggle("warn", S.restarts > 0);
     $("r-pat").textContent = String(M.n);
     $("r-seed").textContent = String(S.seed);
+    const pr = pruefe();
+    const pe = $("r-pruef");
+    if (pr.verletzt) { pe.textContent = pr.verletzt + " Verstöße"; pe.className = "warn"; }
+    else if (pr.offen) { pe.textContent = "läuft"; pe.className = ""; }
+    else { pe.textContent = "widerspruchsfrei"; pe.className = ""; }
   }
 
   function syncPlay() {
