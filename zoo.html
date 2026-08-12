@@ -1136,16 +1136,17 @@
     };
   }
 
-  // A pass/fail test gives a climber nothing to walk along. This turns the same
-  // measurements into one number: expansion is the main sin, compactness a mild
-  // preference, travel a bonus.
+  // Eine Ja/Nein-Prüfung gibt dem Kletterer keine Richtung. Wichtiger noch: einseitige
+  // Strafterme (max(0, …)) haben eine tote Zone — sind sie erfüllt, ist der Hang flach
+  // und der Aufstieg endet, obwohl es kompaktere Formen gäbe. Deshalb alle Terme
+  // durchgehend, ohne Deckel und ohne Schwelle.
   function scoreOf(reason, grow, ratio, spread, travel) {
     if (reason === "erloschen" || reason === "überlaufen") return -1;
-    let s = 1;
-    s -= 6.0 * Math.max(0, grow - 1.02);
-    s -= 2.0 * Math.abs(ratio - 1);
-    s -= 1.5 * Math.max(0, spread - 0.10);
-    s += 0.5 * Math.min(1, travel / Math.max(spread, 1e-6));
+    let s = 2;
+    s -= 4.0 * Math.abs(grow - 1);        // Ausdehnung soll stehen, nicht nur nicht wachsen
+    s -= 2.0 * Math.abs(ratio - 1);       // Masse ebenso
+    s -= 3.0 * spread;                    // enger ist immer besser, ohne Schwelle
+    s += 0.6 * Math.min(1.5, travel / Math.max(spread, 1e-6));
     return s;
   }
 
@@ -1365,7 +1366,8 @@
                  thumb: thumbnailFrom(curEval.best.cx, curEval.best.cy, curEval.snap) }];
     renderLineage();
 
-    let step = 0.14, stalled = 0;
+    const STEP0 = 0.14;
+    let step = STEP0, stalled = 0, anlaeufe = 0;
     for (let gen = 1; gen <= gens && !climbStop; gen++) {
       let bestKid = null;
       for (let k = 0; k < kids && !climbStop; k++) {
@@ -1386,8 +1388,14 @@
       $("hunt-bar").style.width = Math.round(100 * gen / gens) + "%";
       $("hunt-status").textContent = "Stufe " + gen + "/" + gens + " · Güte " +
         curEval.score.toFixed(3) + " · Schrittweite " + step.toFixed(3) +
+        (anlaeufe ? " · " + (anlaeufe + 1) + ". Anlauf" : "") +
         (stalled ? " · " + stalled + "× ohne Fortschritt" : "");
-      if (step < 0.004) { $("hunt-status").textContent += " · ausgereizt"; break; }
+      // Eine zu klein gewordene Schrittweite heißt nicht, dass der Gipfel erreicht ist,
+      // sondern nur, dass dieser Anlauf ausgelaufen ist. Also neu aufziehen statt aufhören.
+      if (step < 0.004) {
+        if (++anlaeufe < 3) { step = STEP0; stalled = 0; }
+        else { $("hunt-status").textContent += " · ausgereizt nach " + anlaeufe + " Anläufen"; break; }
+      }
       await new Promise((r) => setTimeout(r, 0));
     }
 

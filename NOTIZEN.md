@@ -82,6 +82,29 @@ das Overlapping-Modell nicht.
   die Beispiele werden deshalb aus einem festen Seed gewachsen, nicht aus einer Formel.
 - **Reines Rauschen ist die falsche Vorlage.** 250 Muster bei kaum bindenden Regeln:
   zehn Sekunden pro Lauf. Strukturiert-aber-unregelmäßig ist der brauchbare Bereich.
+
+### Nachgetragen: Symmetrie war nie kaputt
+
+Die Option „Drehungen und Spiegelungen" stand nach dem signed-int32-Fehler vorsichtshalber
+auf aus und blieb ungetestet. Nachgemessen über vier Vorlagen, je mit und ohne:
+
+| Vorlage | Muster ohne | Muster mit | Lösezeit mit |
+|---|---|---|---|
+| Höhle | 88 | 225 | 337 ms |
+| Räume | 82 | 184 | 247 ms |
+| Stadt | 40 | 64 | 22 ms |
+| Geflecht | 8 | 32 | 4 ms |
+
+Alle acht Kombinationen: 100 % kollabiert, widerspruchsfrei, null Neustarts. Der
+int32-Fehler war die einzige Ursache; die Symmetrie funktioniert und kostet lediglich
+etwa das 2,6-fache an Rechenzeit.
+
+### Nachgetragen: Selbstprüfung
+
+Das Blatt prüft das fertige Raster jetzt gegen die Kompatibilitätstabelle selbst — jedes
+benachbarte Paar muss zusammenpassen. Über sechs Modelle und zwölf Seeds (72 Läufe):
+null Verstöße. Ohne diese Prüfung wäre ein Fehler in Ausbreitung oder Rücksprung nur
+aufgefallen, wenn er zufällig hässlich aussieht.
 - **`ctx.arc` Richtung.** Von `-π/2` nach `-π` läuft Canvas ohne `anticlockwise=true`
   den langen Weg — 270° statt 90°.
 
@@ -195,11 +218,30 @@ Gegenprobe im großen Feld (768×512, also 128 Kernradien Platz), 1600 Schritte:
 
 **Der Kletterer findet also, was die Zufallssuche strukturell nicht finden kann.**
 
-### Was offen bleibt
+### Nachgetragen: der Deckel in der Güte
 
-- Die Güte **sättigt bei 1.0**, sobald alle Strafterme null sind. Danach zieht nur noch
-  der Wanderbonus, und der greift selten — der Kletterer bleibt stehen, obwohl es
-  kompaktere Formen geben dürfte. Eine Güte ohne Deckel wäre besser.
+Die erste Fassung sättigte bei 1.0, weil alle Strafterme einseitig waren (`max(0, …)`).
+Sind sie erfüllt, ist der Hang flach und der Aufstieg endet — nicht weil der Gipfel
+erreicht ist, sondern weil es keine Richtung mehr gibt. Jetzt sind alle Terme
+durchgehend: `−4·|grow−1| − 2·|ratio−1| − 3·spread` plus Wanderbonus.
+
+Dabei kam ein zweiter Grund ans Licht, der nichts mit der Güte zu tun hatte: die
+Schrittweite schrumpft bei jedem erfolglosen Anlauf um 0,78 und fiel nach 16 Fehlschlägen
+unter die Abbruchschwelle — **32 von 50 Stufen blieben ungenutzt**. Eine zu klein
+gewordene Schrittweite heißt nicht, dass der Gipfel erreicht ist. Sie wird jetzt bis zu
+dreimal neu aufgezogen.
+
+Gemessen am selben Start (μ 0.370 / σ 0.059):
+
+| | vorher | nachher |
+|---|---|---|
+| genutzte Stufen | 18 von 50 | 50 von 50 |
+| Güteverlauf | −5,80 → 1,004 | −4,10 → 1,014 → 1,771 → 1,781 → 1,792 |
+| Wachstum der Ausdehnung | ×1,002 | ×1,001 |
+
+Die letzten beiden Verbesserungen stammen aus Stufen, die vorher verfielen.
+
+### Was offen bleibt
 - Zwei feste Saaten je Bewertung halten den Vergleich fair, prüfen aber nicht, ob die
   Form gegen andere Anfangsbedingungen robust ist.
 - Echte Lenia-Solitonen wie Orbium brauchen eine passende Startfigur. Der Kletterer
