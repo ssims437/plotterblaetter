@@ -137,4 +137,5 @@ Verwandt: [Redundanz](https://github.com/ssims437/redundanz) ·
 [Rechenwerk](https://github.com/ssims437/rechenwerk) ·
 [Nachkomma](https://github.com/ssims437/nachkomma) ·
 [Zeitsprung](https://github.com/ssims437/zeitsprung) ·
-[Gradtage](https://github.com/ssims437/gradtage)
+[Gradtage](https://github.com/ssims437/gradtage) ·
+[Stimmführung](https://github.com/ssims437/stimmfuehrung)
