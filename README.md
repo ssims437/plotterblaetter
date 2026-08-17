@@ -131,17 +131,4 @@ daneben als `kollaps.html`, `interferenz.html`, `spur.html` und `zoo.html`.
 
 [MIT](LICENSE) — nimm es, zerleg es, bau was Besseres.
 
-Verwandt: [Redundanz](https://github.com/ssims437/redundanz) ·
-[Reparatur](https://github.com/ssims437/reparatur) ·
-[Würfel](https://github.com/ssims437/wuerfel) ·
-[Rechenwerk](https://github.com/ssims437/rechenwerk) ·
-[Nachkomma](https://github.com/ssims437/nachkomma) ·
-[Zeitsprung](https://github.com/ssims437/zeitsprung) ·
-[Gradtage](https://github.com/ssims437/gradtage) ·
-[Stimmführung](https://github.com/ssims437/stimmfuehrung) ·
-[Verzerrung](https://github.com/ssims437/verzerrung) ·
-[Handschlag](https://github.com/ssims437/handschlag) ·
-[Wegewahl](https://github.com/ssims437/wegewahl) ·
-[Frequenzgang](https://github.com/ssims437/frequenzgang) ·
-[Indexbaum](https://github.com/ssims437/indexbaum) ·
-[Auszählung](https://github.com/ssims437/auszaehlung)
+Alle fünfzehn Blätter, nach Feld geordnet: **[ssims437.github.io](https://ssims437.github.io/)**
