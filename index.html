@@ -85,7 +85,7 @@
   h1 em { font-style: italic; color: var(--pen-a); }
 
   .standfirst {
-    max-width: 60ch; color: var(--muted); margin: 0;
+    max-width: 60ch; color: var(--muted); margin:0 auto; text-align:center;
     font-size: clamp(16px, 2.2vw, 19px);
   }
   .standfirst b { color: var(--ink); font-weight: 600; }
@@ -174,6 +174,11 @@
     a.sheet { transition: none; }
     a.sheet:hover { transform: none; }
   }
+
+  /* PFLEGE: breite-schirme */
+  @media (min-width: 1500px) { .wrap { max-width: 1360px; } }
+  @media (min-width: 1800px) { .wrap { max-width: 1560px; } }
+  @media (min-width: 2200px) { .wrap { max-width: 1800px; } }
 </style>
 </head>
 <body>
